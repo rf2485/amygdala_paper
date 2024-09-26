@@ -8,10 +8,10 @@
 #SBATCH --time=12:00:00
 #SBATCH --mem=32G
 #SBATCH --array=1-325
-#SBATCH -o ./slurm_output/7_process_dwi/slurm-%A_%a.out
+#SBATCH -o ./slurm_output/3_image_pipeline/slurm-%A_%a.out
 
 basedir=/gpfs/data/lazarlab/CamCan995/
-projectdir=$basedir/derivatives/designer_tbss/
+projectdir=$basedir/derivatives/gm_roi/
 
 subj_list=$(cut -f1 -d$'\t' $projectdir/dwi_over_55.tsv)
 subj_list=($subj_list)
@@ -19,7 +19,7 @@ subj_num=$(($SLURM_ARRAY_TASK_ID))
 j=${subj_list[$subj_num]}
 
 rawdwi=$basedir/raw/$j/dwi/${j}_dwi
-rawT1=$basedir/raw/$j/anat/${j}_T1w
+rawanat=$basedir/raw/$j/anat/${j}
 designerdir=$projectdir/dwi_processed/$j/
 intdir=$designerdir/intermediate_nifti/
 mkdir -p $intdir
@@ -27,13 +27,27 @@ synb0in=$designerdir/synb0/INPUTS/
 mkdir -p $synb0in
 synb0out=$designerdir/synb0/OUTPUTS/
 mkdir -p $synb0out
+freesurferdir=$projectdir/freesurfer
+mkdir -p $freesurferdir
+
+module load freesurfer/7.4.1
+export SUBJECTS_DIR=$freesurferdir
 
 module load singularity/3.9.8
-module load freesurfer/7.4.1
 module load miniconda3/gpu/4.9.2
 source activate ~/.conda/envs/fsl_eddy/
 export FSLDIR=$CONDA_PREFIX
 source $FSLDIR/etc/fslconf/fsl.sh
+
+#recon-all-clinical to generate segmentations
+recon-all-clinical.sh ${rawanat}_T1w.nii.gz $j 4 $freesurferdir
+##create files necessary for including T2 in the recon
+mkdir -p $freesurferdir/$j/mri/orig
+mri_convert ${rawanat}_T1w.nii.gz $freesurferdir/$j/mri/orig/001.mgz
+mv $freesurferdir/$j/surf/lh.pial $freesurferdir/$j/surf/lh.pial.T1
+mv $freesurferdir/$j/surf/rh.pial $freesurferdir/$j/surf/rh.pial.T1
+##include T2 in the recon
+recon-all -T2 ${rawanat}_T2w.nii.gz -motioncor -talairach -nuintensitycor -normalization -gcareg -maskbfs -T2pial -cortribbon -parcstats -cortparc2 -parcstats2 -cortparc3 -parcstats3 -pctsurfcon -hyporelabel -aparc2aseg -apas2aseg -segstats -wmparc -balabels -subjid ${j} -sd ${freesurferdir} -threads 4
 
 #concatenate and convert raw dwi
 singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert -json_import $rawdwi.json -fslgrad $rawdwi.bvec $rawdwi.bval $rawdwi.nii.gz $designerdir/working.mif -force
@@ -62,7 +76,8 @@ singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert -e
 rm $intdir/b0_1_working.mif
 echo " 0 1 0 0.000" >> $synb0in/acqparams.txt
 ##copy T1
-cp $rawT1.nii.gz $synb0in/T1.nii.gz
+cp ${rawanat}_T1w.nii.gz $synb0in/T1.nii.gz
+
 
 #synb0
 singularity run -e -B $synb0in:/INPUTS -B $synb0out:/OUTPUTS -B $basedir/license.txt:/extra/freesurfer/license.txt $basedir/synb0-disco_v3.1.sif
@@ -119,3 +134,27 @@ singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif tensor2metri
 conda deactivate
 source activate ~/.conda/envs/amico/
 python3 $projectdir/amico_noddi.py $j
+
+#register aparc to diffusion
+cd $freesurferdir/$j/
+mkdir -p diffusion
+## copy B0 to freesurferdir
+cp $designerdir/B0.nii diffusion/
+## register B0 to freesurfer output
+bbregister --s ${j} --mov diffusion/B0.nii --reg diffusion/b02fs.lta --dti --init-fsl
+## use inverse of b02fs registration to register aparc+aseg to diffusion
+mri_vol2vol --mov diffusion/B0.nii --targ mri/aparc+aseg.mgz --inv --interp nearest --o diffusion/aparc+aseg2diff.mgz --reg diffusion/b02fs.lta --no-save-reg
+## apply registered aparc+aseg to diffusion metrics to generate stats
+pyd_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk dti_ad dti_fa dti_md dti_rd )
+for meas in "${pyd_list[@]}"; do
+	## copy metric to freesurferdir
+	cp $designerdir/metrics/${meas}.nii diffusion/
+	## generate stats
+	mri_segstats --seg diffusion/aparc+aseg2diff.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii --sum stats/aparc+aseg2${meas}.stats
+done
+## repeat for NODDI
+noddi_list=( fit_FWF fit_NDI fit_ODI )
+for meas in "${noddi_list[@]}"; do
+	cp $designerdir/AMICO/NODDI/${meas}.nii.gz diffusion/
+	mri_segstats --seg diffusion/aparc+aseg2diff.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/aparc+aseg2${meas}.stats
+done
