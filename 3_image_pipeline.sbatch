@@ -78,7 +78,6 @@ echo " 0 1 0 0.000" >> $synb0in/acqparams.txt
 ##copy T1
 cp ${rawanat}_T1w.nii.gz $synb0in/T1.nii.gz
 
-
 #synb0
 singularity run -e -B $synb0in:/INPUTS -B $synb0out:/OUTPUTS -B $basedir/license.txt:/extra/freesurfer/license.txt $basedir/synb0-disco_v3.1.sif
 ##copy and convert synb0 output
