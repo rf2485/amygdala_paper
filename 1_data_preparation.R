@@ -39,24 +39,15 @@ participants$SCD[participants$SCD == 1] <- FALSE
 participants$SCD[participants$SCD == 2] <- TRUE
 participants$SCD[is.na(participants$SCD)] <- FALSE
 
-### filter by age and if DWI is available ###
+### filter by age and if MTI is available ###
 participants_over_55 <- participants %>% filter(age > 55)
 #replace with location of your dwi participants.tsv
-dwi_participants = read_tsv(file.path(data_dir, "imaging/dwi/participants.tsv")) %>%
+mti_participants = read_tsv(file.path(data_dir, "imaging/mti/participants.tsv")) %>%
   select(participant_id) %>%
+    mutate(participant_id = str_replace(participant_id, "CC", "sub-CC")) %>%
   left_join(., participants, by='participant_id')
-dwi_over_55 = dwi_participants %>% filter(age > 55)
-write_tsv(dwi_over_55, "dwi_over_55.tsv")
-
-### split dwi_over_55 into SCD and controls ###
-scd = dwi_over_55 %>% filter(SCD == TRUE)
-write_tsv(scd, "dwi_over_55_scd.tsv")
-ctl = dwi_over_55 %>% filter(SCD == FALSE)
-write_tsv(ctl, "dwi_over_55_ctl.tsv")
-
-### filter by age and if anat is available ###
-anat_participants = read_tsv(file.path(data_dir, "imaging/anat/participants.tsv")) %>%
-  select(participant_id) %>%
-  left_join(., participants, by='participant_id')
-anat_over_55 = anat_participants %>% filter(age > 55)
-write_tsv(anat_over_55, "anat_over_55.tsv")
+mti_over_55 = mti_participants %>% filter(age > 55)
+mti_over_55[mti_over_55$participant_id=="sub-CC610050", "mt_tr"] <- 30
+mti_over_55[mti_over_55$participant_id=="sub-CC620821", "mt_tr"] <- 50
+mti_over_55_tr50 <- mti_over_55 %>% filter(mt_tr == 50)
+write_tsv(mti_over_55_tr50, "mti_over_55_tr50.tsv")

@@ -6,23 +6,14 @@ Running this code requires the following dependencies:
   - base \>= 4.3.2
   - tidyverse \>= 2.0.0
   - arsenal \>= 3.6.3
-  - ggpmisc \>= 0.5.4-1
-  - interactions \>= 1.1.5
-  - ggtext \>= 0.1.2
 - FreeSurfer == 7.4.1
-- FSL == 6.0.4
-- MRTrix3 == 3.0
-- python == 3.7 with package dmri-amico == 1.5.4 (more detailed
-  installation instructions for AMICO are available on [their
-  github](https://github.com/daducci/AMICO/wiki/How-to-install-AMICO))
-- zsh
-- MatLab \>= 2023a with Image Processing Toolbox
+- Singularity == 3.9.8
+- miniconda3 \>= 4.9.2
 
 Scripts with .sbatch extensions are written for submission to a SLURM
 batch processing system on an HPC. It is highly recommended to conduct
 this analysis on an HPC. Scripts with .sh extensions are written for
-Mate Desktop and can be run with either bash or zsh. Scripts with .zsh 
-extensions can only be run with zsh.
+Mate Desktop and can be run with either bash or zsh. QC scripts are not necessary for replicating these results but are highly recommended if you would like to repeat the analysis in another dataset.
 
 Run each numbered script in order. Unnumbered scripts are called by the
 numbered scripts and do not need to be called manually. Wait until the
