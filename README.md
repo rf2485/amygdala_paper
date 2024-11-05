@@ -5,12 +5,10 @@ Running this code requires the following dependencies:
 - RStudio \>= 2023.09.1+494 with the following packages:
   - base \>= 4.3.2
   - tidyverse \>= 2.0.0
+  - arsenal \>= 3.6.3
+- FreeSurfer == 7.4.1
 - Singularity == 3.9.8
 - miniconda3 \>= 4.9.2
-- git
-- Matlab >= R2023a with the following toolboxes:
-    - Imaging
-    - Statistics and Machine Learning
 
 Scripts with .sbatch extensions are written for submission to a SLURM
 batch processing system on an HPC. It is highly recommended to conduct
@@ -23,8 +21,6 @@ script finishes before starting the next numbered script.
 
 The original analysis was conducted on Red Hat Enterprise Linux Server
 release 7.4.
-
-This analysis makes use of the Standard Model of Imaging Toolbox. See more information at https://github.com/NYU-DiffusionMRI/SMI
 
 The Cam-CAN data is available at https://camcan-archive.mrc-cbu.cam.ac.uk/dataaccess/
 
