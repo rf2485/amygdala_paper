@@ -46,8 +46,12 @@ mti_participants = read_tsv(file.path(data_dir, "imaging/mti/participants.tsv"))
   select(participant_id) %>%
     mutate(participant_id = str_replace(participant_id, "CC", "sub-CC")) %>%
   left_join(., participants, by='participant_id')
-mti_over_55 = mti_participants %>% filter(age > 55)
+mti_over_55 = mti_participants %>% filter(age > 55) %>% 
+  filter(participant_id != "sub-CC410129") #error in scanning protocol, mti TR=34ms bl TR=30ms
 mti_over_55[mti_over_55$participant_id=="sub-CC610050", "mt_tr"] <- 30
 mti_over_55[mti_over_55$participant_id=="sub-CC620821", "mt_tr"] <- 50
+write_tsv(mti_over_55, "mti_over_55.tsv")
 mti_over_55_tr50 <- mti_over_55 %>% filter(mt_tr == 50)
 write_tsv(mti_over_55_tr50, "mti_over_55_tr50.tsv")
+mti_over_55_tr30 <- mti_over_55 %>% filter(mt_tr == 30)
+write_tsv(mti_over_55_tr30, "mti_over_55_tr30.tsv")

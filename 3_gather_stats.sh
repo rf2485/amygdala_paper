@@ -1,21 +1,21 @@
 basedir=/gpfs/data/lazarlab/CamCan995
-projectdir=$basedir/derivatives/gm_roi/
+projectdir=$basedir/derivatives/mti_whole_wm_gm
 t1dir=$projectdir/freesurfer/
 
 module load freesurfer/7.4.1
 export SUBJECTS_DIR=$t1dir
 
-cut -f1 $projectdir/dwi_over_55.tsv > $t1dir/subjectsfile.txt
+cut -f1 $projectdir/mti_over_55.tsv > $t1dir/subjectsfile.txt
 cd $t1dir
-sed -i '' '1d' subjectsfile.txt
+sed -i '1d' subjectsfile.txt
 
 #generate stats tables with Freesurfer
-aparcstats2table --subjectsfile=subjectsfile.txt --hemi lh --tablefile=lh_aparctable.tsv --measure=thickness --common-parcs --skip
-aparcstats2table --subjectsfile=subjectsfile.txt --hemi rh --tablefile=rh_aparctable.tsv --measure=thickness --common-parcs --skip
-asegstats2table --subjectsfile=subjectsfile.txt --tablefile=asegtable.tsv --common-segs --skip
-asegstats2table --subjectsfile=subjectsfile.txt --stats=wmparc.stats --tablefile=wmparctable.tsv --common-segs --skip
-
-meas_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk dti_ad dti_fa dti_md dti_rd fit_FWF fit_NDI fit_ODI )
-for meas in "${meas_list[@]}"; do
-  asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=aparc+aseg2${meas}.stats --tablefile=aparc+aseg2${meas}.tsv --common-segs
-done
+asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=mtr_aparc+aseg.stats --tablefile=mtr_aparc+aseg.tsv --common-segs
+asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=mtr_wm.stats --tablefile=mtr_wm.tsv --common-segs
+asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=mtr_gm.stats --tablefile=mtr_gm.tsv --common-segs
+asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=mtr_ctx_wm.stats --tablefile=mtr_ctx_wm.tsv --common-segs
+asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=mtr_ctx_gm.stats --tablefile=mtr_ctx_gm.tsv --common-segs
+asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=mtr_lh_ctx_gm.stats --tablefile=mtr_lh_ctx_gm.tsv --common-segs
+asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=mtr_rh_ctx_gm.stats --tablefile=mtr_rh_ctx_gm.tsv --common-segs
+asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=mtr_subcort_gm.stats --tablefile=mtr_subcort_gm.tsv --common-segs
+asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=mtr_AD_sig.stats --tablefile=mtr_AD_sig.tsv --common-segs
