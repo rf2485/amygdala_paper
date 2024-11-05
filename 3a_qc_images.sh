@@ -15,9 +15,10 @@ subj_list=$(cut -f1 $projectdir/dwi_over_55.tsv)
 subj_list=($subj_list)
 
 mkdir -p $t1dir/group_qc/1_recon
-echo '<HTML><TITLE>recon</TITLE><BODY BGCOLOR="#aaaaff">' > $freesurferdir/group_qc/1_recon/index.html
+echo '<HTML><TITLE>recon</TITLE><BODY BGCOLOR="#aaaaff">' > $t1dir/group_qc/1_recon/index.html
 
-for subj in "${subj_list[@]}"; do
+cd $t1dir/group_qc/1_recon
+for subj in "${(f)subj_list}"; do
 	freeview -v $t1dir/$subj/mri/T1.mgz $t1dir/$subj/mri/aparc+aseg.mgz:colormap=lut:opacity=0.2 -viewport 'x' -slice 102 128 128 -nocursor -screenshot $t1dir/group_qc/1_recon/grota.png
 	freeview -v $t1dir/$subj/mri/T1.mgz $t1dir/$subj/mri/aparc+aseg.mgz:colormap=lut:opacity=0.2 -viewport 'x' -slice 128 128 128 -nocursor -screenshot $t1dir/group_qc/1_recon/grotb.png
 	freeview -v $t1dir/$subj/mri/T1.mgz $t1dir/$subj/mri/aparc+aseg.mgz:colormap=lut:opacity=0.2 -viewport 'x' -slice 154 128 128 -nocursor -screenshot $t1dir/group_qc/1_recon/grotc.png
@@ -27,7 +28,6 @@ for subj in "${subj_list[@]}"; do
 	freeview -v $t1dir/$subj/mri/T1.mgz $t1dir/$subj/mri/aparc+aseg.mgz:colormap=lut:opacity=0.2 -viewport 'z' -slice 128 102 128 -nocursor -screenshot $t1dir/group_qc/1_recon/grotg.png
 	freeview -v $t1dir/$subj/mri/T1.mgz $t1dir/$subj/mri/aparc+aseg.mgz:colormap=lut:opacity=0.2 -viewport 'z' -slice 128 128 128 -nocursor -screenshot $t1dir/group_qc/1_recon/groth.png
 	freeview -v $t1dir/$subj/mri/T1.mgz $t1dir/$subj/mri/aparc+aseg.mgz:colormap=lut:opacity=0.2 -viewport 'z' -slice 128 154 128 -nocursor -screenshot $t1dir/group_qc/1_recon/groti.png
-	cd $t1dir/group_qc/1_recon
 	pngappend grota.png + grotb.png + grotc.png + grotd.png + grote.png + grotf.png + grotg.png + groth.png + groti.png $subj.png
 	echo '<a href="'${subj}'.png"><img src="'${subj}'.png" WIDTH='1000' >' ${subj}'</a><br>' >> $t1dir/group_qc/1_recon/index.html
 done
@@ -37,7 +37,7 @@ echo '</BODY></HTML>' >> $t1dir/group_qc/1_recon/index.html
 mkdir -p $dwidir/group_qc/intermediate_nifti
 mkdir -p $dwidir/group_qc/metrics
 
-nii_list=( dwi_raw noisemap residual intermediate_nifti/1_dwi_denoised intermediate_nifti/2_dwi_degibbs intermediate_nifti/2_dwi_undistorted intermediate_nifti/3_dwi_smoothed intermediate_nifti/4_dwi_rician B0 B1000 B2000 metrics/dti_md metrics/dti_rd metrics/dti_ad metrics/dki_mk metrics/dki_rk metrics/dki_ak metrics/dki_kfa metrics/dki_mkt )
+nii_list=( dwi_raw noisemap residual intermediate_nifti/1_dwi_denoised intermediate_nifti/2_dwi_degibbs intermediate_nifti/2_dwi_undistorted intermediate_nifti/3_dwi_smoothed intermediate_nifti/4_dwi_rician B0 B1000 B2000 metrics/dti_md metrics/dti_rd metrics/dti_ad metrics/dti_fa metrics/dki_mk metrics/dki_rk metrics/dki_ak metrics/dki_kfa metrics/dki_mkt )
 for i in "${nii_list[@]}"; do
 	slicesdir $dwidir/*/${i}.nii
 	rm -rf $dwidir/group_qc/$i
@@ -71,7 +71,8 @@ done
 mkdir -p $t1dir/group_qc/2_aparc2diff
 echo '<HTML><TITLE>aparc2diff</TITLE><BODY BGCOLOR="#aaaaff">' > $t1dir/group_qc/2_aparc2diff/index.html
 
-for subj in "${subj_list[@]}"; do
+cd $t1dir/group_qc/2_aparc2diff
+for subj in "${(f)subj_list}"; do
 	freeview -v $t1dir/$subj/diffusion/B0.nii $t1dir/$subj/diffusion/aparc+aseg2diff.mgz:colormap=lut:opacity=0.2 -viewport 'x' -slice 38 48 33 -nocursor -screenshot $t1dir/group_qc/2_aparc2diff/grota.png
 	freeview -v $t1dir/$subj/diffusion/B0.nii $t1dir/$subj/diffusion/aparc+aseg2diff.mgz:colormap=lut:opacity=0.2 -viewport 'x' -slice 48 48 33 -nocursor -screenshot $t1dir/group_qc/2_aparc2diff/grotb.png
 	freeview -v $t1dir/$subj/diffusion/B0.nii $t1dir/$subj/diffusion/aparc+aseg2diff.mgz:colormap=lut:opacity=0.2 -viewport 'x' -slice 58 48 33 -nocursor -screenshot $t1dir/group_qc/2_aparc2diff/grotc.png
@@ -81,6 +82,8 @@ for subj in "${subj_list[@]}"; do
 	freeview -v $t1dir/$subj/diffusion/B0.nii $t1dir/$subj/diffusion/aparc+aseg2diff.mgz:colormap=lut:opacity=0.2 -viewport 'z' -slice 48 48 26 -nocursor -screenshot $t1dir/group_qc/2_aparc2diff/grotg.png
 	freeview -v $t1dir/$subj/diffusion/B0.nii $t1dir/$subj/diffusion/aparc+aseg2diff.mgz:colormap=lut:opacity=0.2 -viewport 'z' -slice 48 48 33 -nocursor -screenshot $t1dir/group_qc/2_aparc2diff/groth.png
 	freeview -v $t1dir/$subj/diffusion/B0.nii $t1dir/$subj/diffusion/aparc+aseg2diff.mgz:colormap=lut:opacity=0.2 -viewport 'z' -slice 48 48 40 -nocursor -screenshot $t1dir/group_qc/2_aparc2diff/groti.png
+	pngappend grota.png + grotb.png + grotc.png + grotd.png + grote.png + grotf.png + grotg.png + groth.png + groti.png $subj.png
+	echo '<a href="'${subj}'.png"><img src="'${subj}'.png" WIDTH='1000' >' ${subj}'</a><br>' >> $t1dir/group_qc/2_aparc2diff/index.html
 done
 
 echo '</BODY></HTML>' >> $t1dir/group_qc/2_aparc2diff/index.html
