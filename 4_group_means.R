@@ -1,5 +1,6 @@
 source("1_data_preparation.R")
 library(arsenal)
+library(ggpubr)
 
 #define remove_outliers function
 remove_outliers <- function(x, na.rm = TRUE) 
