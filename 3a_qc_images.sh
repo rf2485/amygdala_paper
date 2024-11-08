@@ -44,21 +44,18 @@ for i in "${nii_list[@]}"; do
 	mv slicesdir $dwidir/group_qc/$i
 done
 
-mkdir -p $dwidir/group_qc/brain_mask
-mkdir -p $dwidir/group_qc/csf_mask
-for subj in "${subj_list[@]}"; do
-	echo $subj
-	cp $dwidir/$subj/B0.nii $dwidir/group_qc/brain_mask/${subj}_1_B0.nii
-	cp $dwidir/$subj/brain_mask.nii $dwidir/group_qc/brain_mask/${subj}_2_brain_mask.nii
-	cp $dwidir/$subj/B0.nii $dwidir/group_qc/csf_mask/${subj}_1_B0.nii
-	cp $dwidir/$subj/csf_mask.nii $dwidir/group_qc/csf_mask/${subj}_2_csf_mask.nii
+mask_list=( brain_mask csf_mask FWF_mask ODI_mask )
+for mask in "${mask_list[@]}"; do
+	mkdir -p $dwidir/group_qc/$mask
+	for subj in "${subj_list[@]}"; do
+		echo $subj
+		cp $dwidir/$subj/B0.nii $dwidir/group_qc/$mask/${subj}_1_B0.nii
+		cp $dwidir/$subj/$mask.nii $dwidir/group_qc/$mask/${subj}_2_${mask}.nii
+	done
+	slicesdir -o $dwidir/group_qc/$mask/*.nii
+	rm -rf $dwidir/group_qc/$mask/
+	mv slicesdir $dwidir/group_qc/$mask
 done
-slicesdir -o $dwidir/group_qc/brain_mask/*.nii
-rm -rf $dwidir/group_qc/brain_mask/
-mv slicesdir $dwidir/group_qc/brain_mask
-slicesdir -o $dwidir/group_qc/csf_mask/*.nii
-rm -rf $dwidir/group_qc/csf_mask/
-mv slicesdir $dwidir/group_qc/csf_mask
 
 noddi_list=( AMICO/NODDI/fit_FWF AMICO/NODDI/fit_NDI AMICO/NODDI/fit_ODI )
 mkdir -p $dwidir/group_qc/AMICO/NODDI

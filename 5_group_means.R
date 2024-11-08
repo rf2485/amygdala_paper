@@ -2,9 +2,14 @@ source("1_data_preparation.R")
 library(arsenal)
 
 failed_qc <- c('sub-CC510255', #abnormality in left temporal pole
+               'sub-CC510438', #abnormality in left frontal lobe
+               'sub-CC610308', #parietal lobe cutoff
+               'sub-CC620466', #parietal lobe cutoff
                'sub-CC620821', #segmentation errors from large ventricles
                'sub-CC621011', #segmentation errors from large ventricles
+               'sub-CC621080', #segmentation errors
                'sub-CC711027', #severe motion artifacts in T1
+               'sub-CC712027', #parietal lobe cutoff
                'sub-CC721434', #segmentation errors from large ventricles
                'sub-CC710551' #motion artifacts in DWI
 )

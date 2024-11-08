@@ -11,7 +11,7 @@
 #SBATCH -o ./slurm_output/3_image_pipeline/slurm-%A_%a.out
 
 basedir=/gpfs/data/lazarlab/CamCan995/
-projectdir=$basedir/derivatives/gm_roi/
+projectdir=$basedir/derivatives/scd/gm_roi/
 
 subj_list=$(cut -f1 -d$'\t' $projectdir/dwi_over_55.tsv)
 subj_list=($subj_list)
@@ -32,15 +32,15 @@ mkdir -p $freesurferdir
 
 module load freesurfer/7.4.1
 export SUBJECTS_DIR=$freesurferdir
-
 module load singularity/3.9.8
 module load miniconda3/gpu/4.9.2
 source activate ~/.conda/envs/fsl_eddy/
 export FSLDIR=$CONDA_PREFIX
 source $FSLDIR/etc/fslconf/fsl.sh
 
+#recon-all-clinical to generate segmentations
 if [ ! -f $freesurferdir/$j/mri/wmparc.mgz ]; then
-	#recon-all-clinical to generate segmentations
+	rm $freesurferdir/$j/scripts/IsRunning.lh+rh
 	recon-all-clinical.sh ${rawanat}_T1w.nii.gz $j 4 $freesurferdir
 fi
 
@@ -48,132 +48,199 @@ if [ ! -f $freesurferdir/$j/label/BA_exvivo.thresh.ctab ]; then
 	mkdir -p $freesurferdir/$j/mri/orig
 	mri_convert ${rawanat}_T1w.nii.gz $freesurferdir/$j/mri/orig/001.mgz
 	##create files necessary for bbregister
-	recon-all -motioncor -talairach -nuintensitycor -normalization -gcareg -pctsurfcon -segstats -wmparc -balabels -subjid ${j} -sd ${freesurferdir} -threads 4
+	recon-all -motioncor -talairach -nuintensitycor -normalization -gcareg -pctsurfcon -segstats -wmparc -balabels -subjid ${j} -sd ${freesurferdir} -threads 4 -no-isrunning
 fi
 
+#diffusion preproc step 1
 if [ ! -f $designerdir/residual.nii ]; then
-	#concatenate and convert raw dwi
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert -json_import $rawdwi.json -fslgrad $rawdwi.bvec $rawdwi.bval $rawdwi.nii.gz $designerdir/working.mif -force
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert $designerdir/working.mif -json_export $designerdir/dwi_raw.json -export_grad_fsl $designerdir/dwi_raw.bvec $designerdir/dwi_raw.bval $designerdir/dwi_raw.nii -force
+	##concatenate and convert raw dwi
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert -json_import $rawdwi.json -fslgrad $rawdwi.bvec $rawdwi.bval $rawdwi.nii.gz $designerdir/working.mif -force
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert $designerdir/working.mif -json_export $designerdir/dwi_raw.json -export_grad_fsl $designerdir/dwi_raw.bvec $designerdir/dwi_raw.bval $designerdir/dwi_raw.nii -force
 
-	#denoise, degibbs, and normalize with designer
+	##denoise, degibbs, and normalize with designer
 	rm -rf $designerdir/tmp
-	singularity exec --nv --bind $basedir $basedir/designer2_latest.sif designer -denoise -shrinkage frob -adaptive_patch -degibbs -nthreads 4 -nocleanup -scratch $designerdir/tmp $designerdir/dwi_raw.nii $intdir/2_dwi_degibbs.nii
+	singularity exec --nv --bind $basedir $basedir/designer2_v2.0.10.sif designer -denoise -shrinkage frob -adaptive_patch -degibbs -nthreads 4 -nocleanup -scratch $designerdir/tmp $designerdir/dwi_raw.nii $intdir/2_dwi_degibbs.nii
 
-
-	#move denoised files and calculate residual
+	##move denoised files and calculate residual
 	mv $designerdir/tmp/sigma.nii $designerdir/noisemap.nii
 	mv $designerdir/tmp/tmp_dwidn.nii $intdir/1_dwi_denoised.nii
 	cp $designerdir/dwi_raw.json $intdir/1_dwi_denoised.json
 	cp $designerdir/dwi_raw.bvec $intdir/1_dwi_denoised.bvec
 	cp $designerdir/dwi_raw.bval $intdir/1_dwi_denoised.bval
-	singularity exec --bind $basedir $basedir/neurodock_latest.sif mrcalc $designerdir/dwi_raw.nii $designerdir/intermediate_nifti/1_dwi_denoised.nii -sub $designerdir/residual.nii
+	singularity exec --bind $basedir $basedir/neurodock_v1.0.0.sif mrcalc $designerdir/dwi_raw.nii $designerdir/intermediate_nifti/1_dwi_denoised.nii -sub $designerdir/residual.nii
 fi
 
+#diffusion preproc step 2
 if [ ! -f $synb0out/b0_all.mif ]; then
-	#move and convert degibbsed files
+	##move and convert degibbsed files
 	cp $designerdir/dwi_raw.json $intdir/2_dwi_degibbs.json
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert -json_import $intdir/2_dwi_degibbs.json -fslgrad $intdir/2_dwi_degibbs.bvec $intdir/2_dwi_degibbs.bval $intdir/2_dwi_degibbs.nii $designerdir/working.mif -force
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert -json_import $intdir/2_dwi_degibbs.json -fslgrad $intdir/2_dwi_degibbs.bvec $intdir/2_dwi_degibbs.bval $intdir/2_dwi_degibbs.nii $designerdir/working.mif -force
 
-	#prepare for synb0
-	##create b0 and acqparams
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif dwiextract -bzero $designerdir/working.mif - | singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert - -coord 3 0 -axes 0,1,2 $intdir/b0_1_working.mif -force
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert -export_pe_table $synb0in/acqparams.txt $intdir/b0_1_working.mif $synb0in/b0.nii.gz -force
+	##prepare for synb0
+	###create b0 and acqparams
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif dwiextract -bzero $designerdir/working.mif - | singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert - -coord 3 0 -axes 0,1,2 $intdir/b0_1_working.mif -force
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert -export_pe_table $synb0in/acqparams.txt $intdir/b0_1_working.mif $synb0in/b0.nii.gz -force
 	rm $intdir/b0_1_working.mif
 	echo " 0 1 0 0.000" >> $synb0in/acqparams.txt
-	##copy T1
+	###copy T1
 	cp ${rawanat}_T1w.nii.gz $synb0in/T1.nii.gz
 
-	#synb0
+	##synb0
 	singularity run -e -B $synb0in:/INPUTS -B $synb0out:/OUTPUTS -B $basedir/license.txt:/extra/freesurfer/license.txt $basedir/synb0-disco_v3.1.sif
-	##copy and convert synb0 output
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert -import_pe_table $synb0in/acqparams.txt $synb0out/b0_all.nii.gz $synb0out/b0_all.mif -force
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert -import_pe_table $synb0in/acqparams.txt $synb0out/b0_all.nii.gz $synb0out/b0_all.mif -force
 fi
 
+#diffusion preproc step 3
 if [ ! -f $intdir/2_dwi_undistorted.nii ]; then
-	#copy and convert files for eddy_correct
+	##gather files for eddy_correct
 	mkdir -p $designerdir/tmp/
 	cp $synb0out/b0_all.mif $designerdir/tmp/se_epi.mif
 	cd $designerdir/tmp
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert -json_import $intdir/2_dwi_degibbs.json -fslgrad $intdir/2_dwi_degibbs.bvec $intdir/2_dwi_degibbs.bval $intdir/2_dwi_degibbs.nii $designerdir/working.mif -force
 	cp $designerdir/working.mif dwi.mif
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert dwi.mif dwi.nii -strides -1,+2,+3,+4 -json_export dwi.json -export_grad_fsl dwi.bvec dwi.bval
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert dwi.mif dwi.nii -strides -1,+2,+3,+4 -json_export dwi.json -export_grad_fsl dwi.bvec dwi.bval
 
-	#eddy_correct, using first volume as reference, with no blurring
+	##eddy_correct, using first volume as reference, with no blurring
 	eddy_correct dwi dwi_post_eddy 0 -trilinear -noresampleblur
-	##rotate bvecs using eddy_correct transformation log
+	###rotate bvecs using eddy_correct transformation log
 	fdt_rotate_bvecs dwi.bvec dwi_post_eddy.bvec dwi_post_eddy.ecclog
-	##convert eddy_correct output
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert dwi_post_eddy.nii.gz dwi_post_eddy.mif -json_import dwi.json -fslgrad dwi_post_eddy.bvec dwi.bval
+	###convert eddy_correct output
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert dwi_post_eddy.nii.gz dwi_post_eddy.mif -json_import dwi.json -fslgrad dwi_post_eddy.bvec dwi.bval
 
-	#prepare for topup
-	##replace first b0 of se_epi with first b0 of dwi
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert dwi_post_eddy.mif dwi_first_bzero.mif -coord 3 0 -axes 0,1,2
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert se_epi.mif - -coord 3 1 | singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrcat dwi_first_bzero.mif - se_epi_firstdwibzero.mif -axis 3
-	##create files for topup input
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert se_epi_firstdwibzero.mif topup_in.nii -strides -1,+2,+3,+4 -export_pe_table topup_datain.txt
+	##quantify motion
+	logfile=dwi_post_eddy.ecclog
+	basenm=`basename $logfile .ecclog`
+	nums=`grep -n 'Final' $logfile | sed 's/:.*//'`
 
-	#topup
+	touch grot_ts.txt
+	touch grot.mat
+
+	firsttime=yes;
+	m=1;
+	for n in $nums ; do 
+	    echo "Timepoint $m"
+	    n1=`echo $n + 1 | bc` ; 
+	    n2=`echo $n + 5 | bc` ;
+	    sed -n  "$n1,${n2}p" $logfile > grot.mat ; 
+	    if [ $firsttime = yes ] ; then firsttime=no; cp grot.mat grot.refmat ; cp grot.mat grot.oldmat ; fi
+	    absval=`rmsdiff grot.mat grot.refmat $basenm`;
+	    relval=`rmsdiff grot.mat grot.oldmat $basenm`;
+	    cp grot.mat grot.oldmat
+	    echo $absval $relval >> ec_disp.txt ;
+	    avscale --allparams grot.mat $basenm | grep 'Rotation Angles' | sed 's/.* = //' >> ec_rot.txt ;
+	    avscale --allparams grot.mat $basenm | grep 'Translations' | sed 's/.* = //' >> ec_trans.txt ;
+	    m=`echo $m + 1 | bc`;
+	done
+
+	echo "absolute" > grot_labels.txt
+	echo "relative" >> grot_labels.txt
+
+	fsl_tsplot -i ec_disp.txt -t 'Eddy Current estimated mean displacement (mm)' -l grot_labels.txt -o ec_disp.png
+
+	echo "x" > grot_labels.txt
+	echo "y" >> grot_labels.txt
+	echo "z" >> grot_labels.txt
+
+	fsl_tsplot -i ec_rot.txt -t 'Eddy Current estimated rotations (radians)' -l grot_labels.txt -o ec_rot.png
+	fsl_tsplot -i ec_trans.txt -t 'Eddy Current estimated translations (mm)' -l grot_labels.txt -o ec_trans.png
+
+	mkdir -p $designerdir/metrics_qc/eddy
+	cp ec* $designerdir/metrics_qc/eddy/
+	cp dwi_post_eddy.ecclog $designerdir/metrics_qc/eddy/
+
+	##topup
+	###replace first b0 of se_epi with first b0 of dwi
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert dwi_post_eddy.mif dwi_first_bzero.mif -coord 3 0 -axes 0,1,2
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert se_epi.mif - -coord 3 1 | singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrcat dwi_first_bzero.mif - se_epi_firstdwibzero.mif -axis 3
+	###create files for topup input
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert se_epi_firstdwibzero.mif topup_in.nii -strides -1,+2,+3,+4 -export_pe_table topup_datain.txt
+	###run topup
 	topup --imain=topup_in.nii --datain=topup_datain.txt --out=field --fout=field_map.nii.gz --config=${FSLDIR}/etc/flirtsch/b02b0.cnf --verbose
-	##create files for applytopup
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrinfo dwi_post_eddy.mif -export_pe_eddy applytopup_config.txt applytopup_indices.txt
+	
 	##applytopup
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif applytopup --imain=dwi_post_eddy.nii.gz --datain=applytopup_config.txt --inindex=1 --topup=field --out=dwi_applytopup --method=jac
-	##convert applytopup output
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert dwi_applytopup.nii.gz dwi_applytopup.mif -json_import dwi.json -fslgrad dwi_post_eddy.bvec dwi.bval
-	##move and convert applytopup output
-	intermediate=$intdir/2_dwi_undistorted
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif mrconvert -export_grad_fsl $intermediate.bvec $intermediate.bval -json_export $intermediate.json dwi_applytopup.mif $intermediate.nii -force
-	
-	#brain mask
-	mv dwi_applytopup.mif $designerdir/working.mif
-	singularity exec --bind $basedir/ $basedir/neurodock_latest.sif dwiextract $designerdir/working.mif - -bzero | singularity exec --bind $basedir/ $basedir/neurodock_latest.sif mrmath - mean - -axis 3 | singularity exec --bind $basedir/ $basedir/neurodock_latest.sif mrconvert - meanb0.nii
-	mri_synthstrip -i meanb0.nii -m new_brain_mask.nii
-	
-fi
-
-if [ ! -f $designerdir/metrics/dki_dsistudio.fib ]; then
-	#csf mask, csf-excluded smoothing, rician bias correction, and model fitting with pydesigner
+	###create files for applytopup
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrinfo dwi_post_eddy.mif -export_pe_eddy applytopup_config.txt applytopup_indices.txt
+	##run applytopup
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif applytopup --imain=dwi_post_eddy.nii.gz --datain=applytopup_config.txt --inindex=1 --topup=field --out=dwi_applytopup --method=jac
+	###move and convert applytopup output
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert dwi_applytopup.nii.gz dwi_applytopup.mif -json_import dwi.json -fslgrad dwi_post_eddy.bvec dwi.bval
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrconvert -export_grad_fsl $intdir/2_dwi_undistorted.bvec $intdir/2_dwi_undistorted.bval -json_export $intdir/2_dwi_undistorted.json dwi_applytopup.mif $intdir/2_dwi_undistorted.nii -force
 	cd $designerdir
-	mkdir -p $designerdir/metrics_qc/fitting
-	singularity exec --bind $basedir/ $basedir/neurodock_latest.sif pydesigner --resume -n -u -cd 2 -z -r --user_mask $designerdir/tmp/new_brain_mask.nii --verbose --noqc --nthreads 4 -o $designerdir/ $rawdwi.nii.gz
 	rm -rf $designerdir/tmp/
 fi
 
+#diffusion preproc step 4
+if [ ! -f $designerdir/metrics/dki_dsistudio.fib ]; then
+	singularity exec --bind $basedir/ $basedir/neurodock_v1.0.0.sif mrconvert -json_import $intdir/2_dwi_undistorted.json -fslgrad $intdir/2_dwi_undistorted.bvec $intdir/2_dwi_undistorted.bval $intdir/2_dwi_undistorted.nii $designerdir/working.mif -force
+	##brain mask
+	mkdir -p $designerdir/tmp/
+	cd $designerdir/tmp
+	singularity exec --bind $basedir/ $basedir/neurodock_v1.0.0.sif dwiextract $designerdir/working.mif - -bzero | singularity exec --bind $basedir/ $basedir/neurodock_v1.0.0.sif mrmath - mean - -axis 3 | singularity exec --bind $basedir/ $basedir/neurodock_v1.0.0.sif mrconvert - meanb0.nii
+	mri_synthstrip -i meanb0.nii -m new_brain_mask.nii
+	##csf mask, csf-excluded smoothing, rician bias correction, and model fitting with pydesigner
+	mkdir -p $designerdir/metrics_qc/fitting
+	singularity exec --bind $basedir/ $basedir/neurodock_v1.0.0.sif pydesigner --resume -n -u -cd 2 -z -r --user_mask $designerdir/tmp/new_brain_mask.nii --verbose --noqc --nthreads 4 -o $designerdir/ $rawdwi.nii.gz
+	cd $designerdir
+	rm -rf $designerdir/tmp/
+fi
 if [ ! -f $designerdir/metrics/dti_V1.nii ]; then
 	##calculate colormap from diffusion tensor
-	singularity exec --nv --bind $basedir $basedir/neurodock_latest.sif tensor2metric $designerdir/metrics/DT.nii -vector $designerdir/metrics/dti_V1.nii -modulate none -force
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif tensor2metric $designerdir/metrics/DT.nii -vector $designerdir/metrics/dti_V1.nii -modulate none -force
 fi
-
 if [ ! -f $designerdir/AMICO/NODDI/fit_FWF.nii.gz ]; then
-	#fit NODDI model using the AMICO program
+	##fit NODDI model using the AMICO program
 	conda deactivate
 	source activate ~/.conda/envs/amico/
 	python3 $projectdir/amico_noddi.py $j
 fi
 
-if [ ! -f $freesurferdir/$j/diffusion/aparc+aseg2diff.mgz ]; then
-	#register aparc to diffusion
+#mask voxels with orientation dispersion > 0.8 or free water > 0.7 (Correia et al.)
+if [ ! -f $designerdir/FWF_mask.nii.gz ]; then
+	cd $designerdir
+	mri_binarize --i AMICO/NODDI/fit_ODI.nii.gz --max 0.8 --o ODI_mask.nii.gz
+	mri_binarize --i AMICO/NODDI/fit_FWF.nii.gz --max 0.7 --o FWF_mask.nii.gz
+fi
+
+#generate diffusion GM stats
+if [ ! -f $freesurferdir/$j/diffusion/fs2diff_field.mgz ]; then
 	cd $freesurferdir/$j/
 	mkdir -p diffusion
 	## copy B0 to freesurferdir
 	cp $designerdir/B0.nii diffusion/
-	## register B0 to freesurfer output
-	bbregister --s ${j} --mov diffusion/B0.nii --reg diffusion/b02fs.lta --dti --init-fsl
-	## use inverse of b02fs registration to register aparc+aseg to diffusion
-	mri_vol2vol --mov diffusion/B0.nii --targ mri/aparc+aseg.mgz --inv --interp nearest --o diffusion/aparc+aseg2diff.mgz --reg diffusion/b02fs.lta --no-save-reg
-	## apply registered aparc+aseg to diffusion metrics to generate stats
+	## register B0 to t1
+	mri_easyreg --ref mri/T1.mgz --flo diffusion/B0.nii --ref_seg mri/synthseg.mgz --flo_seg diffusion/B0_synthseg.mgz --bak_field diffusion/fs2diff_field.mgz --threads 4 --affine_only
+fi
+	## use inverse of b02fs registration to register aparc+aseg to diffusion, then apply NODDI masks
+if [ ! -f $freesurferdir/$j/diffusion/aparc+aseg2diff_NODDI_mask.mgz ]; then	
+	mri_easywarp --i mri/aparc+aseg.mgz --o diffusion/aparc+aseg2diff.mgz --field diffusion/fs2diff_field.mgz --threads 4 --nearest
+	mri_mask diffusion/aparc+aseg2diff.mgz $designerdir/FWF_mask.nii.gz diffusion/aparc+aseg2diff_FWF_mask.mgz
+	mri_mask diffusion/aparc+aseg2diff_FWF_mask.mgz $designerdir/ODI_mask.nii.gz diffusion/aparc+aseg2diff_NODDI_mask.mgz
+fi
+	## use aparc.a2009s+aseg to generate Dickerson AD signature regions mask, then apply NODDI masks
+if [ ! -f $freesurferdir/$j/diffusion/diff_AD_sig_NODDI_mask.mgz ]; then	
+	mri_easywarp --i mri/aparc.a2009s+aseg.mgz --o diffusion/aparc.a2009s+aseg2diff.mgz --field diffusion/fs2diff_field.mgz --threads 4 --nearest
+	mri_binarize --i diffusion/aparc.a2009s+aseg2diff.mgz --match-ctab $projectdir/AD_signature_LUT.txt --o diffusion/diff_AD_sig.mgz
+	mri_mask diffusion/diff_AD_sig.mgz $designerdir/FWF_mask.nii.gz diffusion/diff_AD_sig_FWF_mask.mgz
+	mri_mask diffusion/diff_AD_sig_FWF_mask.mgz $designerdir/ODI_mask.nii.gz diffusion/diff_AD_sig_NODDI_mask.mgz  	
+fi	
+
+	## apply registered aparc+aseg and AD signature mask to diffusion metrics to generate stats
+if [ ! -f $freesurferdir/$j/stats/AD_sig2fit_ODI.stats ]; then	
 	pyd_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk dti_ad dti_fa dti_md dti_rd )
 	for meas in "${pyd_list[@]}"; do
-		## copy metric to freesurferdir
-		cp $designerdir/metrics/${meas}.nii diffusion/
-		## generate stats
-		mri_segstats --seg diffusion/aparc+aseg2diff.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii --sum stats/aparc+aseg2${meas}.stats
+		### copy to freesurferdir
+		cp $designerdir/metrics/${meas}.nii diffusion/${meas}.nii
+		### generate stats
+		mri_segstats --seg diffusion/aparc+aseg2diff_NODDI_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii --sum stats/aparc+aseg2${meas}.stats
+		mri_segstats --seg diffusion/diff_AD_sig_NODDI_mask.mgz --excludeid 0 -i diffusion/${meas}.nii --sum stats/AD_sig2${meas}.stats
 	done
-	## repeat for NODDI
+	### repeat for NODDI	
 	noddi_list=( fit_FWF fit_NDI fit_ODI )
 	for meas in "${noddi_list[@]}"; do
 		cp $designerdir/AMICO/NODDI/${meas}.nii.gz diffusion/
-		mri_segstats --seg diffusion/aparc+aseg2diff.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/aparc+aseg2${meas}.stats
+		mri_segstats --seg diffusion/aparc+aseg2diff_NODDI_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/aparc+aseg2${meas}.stats
+		mri_segstats --seg diffusion/diff_AD_sig_NODDI_mask.mgz --excludeid 0 -i diffusion/${meas}.nii.gz --sum stats/AD_sig2${meas}.stats
 	done
 fi
+
 

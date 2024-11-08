@@ -18,4 +18,5 @@ asegstats2table --subjectsfile=subjectsfile.txt --stats=wmparc.stats --tablefile
 meas_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk dti_ad dti_fa dti_md dti_rd fit_FWF fit_NDI fit_ODI )
 for meas in "${meas_list[@]}"; do
   asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=aparc+aseg2${meas}.stats --tablefile=aparc+aseg2${meas}.tsv --common-segs
+  asegstats2table --subjectsfile=subjectsfile.txt --meas mean --stats=AD_sig2${meas}.stats --tablefile=AD_sig2${meas}.tsv --common-segs
 done

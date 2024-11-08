@@ -1,11 +1,11 @@
 basedir=/gpfs/data/lazarlab/CamCan995/
-projectdir=$basedir/derivatives/gm_roi/
+projectdir=$basedir/derivatives/scd/gm_roi/
 
 module load singularity/3.9.8
 module load miniconda3/gpu/4.9.2
 
-singularity pull docker://dmri/neurodock:1.0.0
-singularity pull docker://nyudiffusionmri/designer2:v2.0.8
+singularity pull docker://dmri/neurodock:v1.0.0
+singularity pull docker://nyudiffusionmri/designer2:v2.0.10
 singularity pull docker://leonyichencai/synb0-disco:v3.1
 mv *.sif $basedir
 conda create -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/ -c conda-forge -n fsl_eddy fsl-topup==2203.5 fsl-avwutils==2209.2 fsl-fdt==2202.10 fsl-tbss==2111.2 fsl-bet2==2111.8 fsl-eddy-cuda-10.2==2401.2 fsl-miscvis==2201.1 fsl-data_standard==2208.0 fsl-sub==2.8.4 fsl-sub-plugin-slurm==1.6.5 fsl-randomise==2203.3
