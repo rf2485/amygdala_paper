@@ -195,37 +195,40 @@ if [ ! -f $designerdir/AMICO/NODDI/fit_FWF.nii.gz ]; then
 fi
 
 #mask voxels with orientation dispersion > 0.8 or free water > 0.7 (Correia et al.)
-if [ ! -f $designerdir/FWF_mask.nii.gz ]; then
+if [ ! -f $designerdir/FWF_mask.nii ]; then
 	cd $designerdir
-	mri_binarize --i AMICO/NODDI/fit_ODI.nii.gz --max 0.8 --o ODI_mask.nii.gz
-	mri_binarize --i AMICO/NODDI/fit_FWF.nii.gz --max 0.7 --o FWF_mask.nii.gz
+	mri_binarize --i AMICO/NODDI/fit_ODI.nii.gz --max 0.8 --o ODI_mask.nii
+	mri_binarize --i AMICO/NODDI/fit_FWF.nii.gz --max 0.7 --o FWF_mask.nii
 fi
 
 #generate diffusion GM stats
-if [ ! -f $freesurferdir/$j/diffusion/fs2diff_field.mgz ]; then
+if [ ! -f $freesurferdir/$j/diffusion/b02fs.lta ]; then
 	cd $freesurferdir/$j/
 	mkdir -p diffusion
 	## copy B0 to freesurferdir
 	cp $designerdir/B0.nii diffusion/
 	## register B0 to t1
-	mri_easyreg --ref mri/T1.mgz --flo diffusion/B0.nii --ref_seg mri/synthseg.mgz --flo_seg diffusion/B0_synthseg.mgz --bak_field diffusion/fs2diff_field.mgz --threads 4 --affine_only
+	bbregister --s ${j} --mov diffusion/B0.nii --reg diffusion/b02fs.lta --dti --init-fsl --9
 fi
 	## use inverse of b02fs registration to register aparc+aseg to diffusion, then apply NODDI masks
 if [ ! -f $freesurferdir/$j/diffusion/aparc+aseg2diff_NODDI_mask.mgz ]; then	
-	mri_easywarp --i mri/aparc+aseg.mgz --o diffusion/aparc+aseg2diff.mgz --field diffusion/fs2diff_field.mgz --threads 4 --nearest
-	mri_mask diffusion/aparc+aseg2diff.mgz $designerdir/FWF_mask.nii.gz diffusion/aparc+aseg2diff_FWF_mask.mgz
-	mri_mask diffusion/aparc+aseg2diff_FWF_mask.mgz $designerdir/ODI_mask.nii.gz diffusion/aparc+aseg2diff_NODDI_mask.mgz
+	cd $freesurferdir/$j/
+	mri_vol2vol --mov diffusion/B0.nii --targ mri/aparc+aseg.mgz --inv --interp nearest --o diffusion/aparc+aseg2diff.mgz --reg diffusion/b02fs.lta --no-save-reg
+	mri_mask diffusion/aparc+aseg2diff.mgz $designerdir/FWF_mask.nii diffusion/aparc+aseg2diff_FWF_mask.mgz
+	mri_mask diffusion/aparc+aseg2diff_FWF_mask.mgz $designerdir/ODI_mask.nii diffusion/aparc+aseg2diff_NODDI_mask.mgz
 fi
 	## use aparc.a2009s+aseg to generate Dickerson AD signature regions mask, then apply NODDI masks
-if [ ! -f $freesurferdir/$j/diffusion/diff_AD_sig_NODDI_mask.mgz ]; then	
-	mri_easywarp --i mri/aparc.a2009s+aseg.mgz --o diffusion/aparc.a2009s+aseg2diff.mgz --field diffusion/fs2diff_field.mgz --threads 4 --nearest
+if [ ! -f $freesurferdir/$j/diffusion/diff_AD_sig_NODDI_mask.mgz ]; then
+	cd $freesurferdir/$j/	
+	mri_vol2vol --mov diffusion/B0.nii --targ mri/aparc.a2009s+aseg.mgz --inv --interp nearest --o diffusion/aparc.a2009s+aseg2diff.mgz --reg diffusion/b02fs.lta --no-save-reg
 	mri_binarize --i diffusion/aparc.a2009s+aseg2diff.mgz --match-ctab $projectdir/AD_signature_LUT.txt --o diffusion/diff_AD_sig.mgz
-	mri_mask diffusion/diff_AD_sig.mgz $designerdir/FWF_mask.nii.gz diffusion/diff_AD_sig_FWF_mask.mgz
-	mri_mask diffusion/diff_AD_sig_FWF_mask.mgz $designerdir/ODI_mask.nii.gz diffusion/diff_AD_sig_NODDI_mask.mgz  	
+	mri_mask diffusion/diff_AD_sig.mgz $designerdir/FWF_mask.nii diffusion/diff_AD_sig_FWF_mask.mgz
+	mri_mask diffusion/diff_AD_sig_FWF_mask.mgz $designerdir/ODI_mask.nii diffusion/diff_AD_sig_NODDI_mask.mgz  	
 fi	
 
 	## apply registered aparc+aseg and AD signature mask to diffusion metrics to generate stats
 if [ ! -f $freesurferdir/$j/stats/AD_sig2fit_ODI.stats ]; then	
+	cd $freesurferdir/$j/
 	pyd_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk dti_ad dti_fa dti_md dti_rd )
 	for meas in "${pyd_list[@]}"; do
 		### copy to freesurferdir
@@ -242,5 +245,4 @@ if [ ! -f $freesurferdir/$j/stats/AD_sig2fit_ODI.stats ]; then
 		mri_segstats --seg diffusion/diff_AD_sig_NODDI_mask.mgz --excludeid 0 -i diffusion/${meas}.nii.gz --sum stats/AD_sig2${meas}.stats
 	done
 fi
-
 

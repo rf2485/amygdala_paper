@@ -1,5 +1,5 @@
 basedir=/gpfs/data/lazarlab/CamCan995
-projectdir=$basedir/derivatives/gm_roi/
+projectdir=$basedir/derivatives/scd/gm_roi/
 t1dir=$projectdir/freesurfer/
 
 module load freesurfer/7.4.1
