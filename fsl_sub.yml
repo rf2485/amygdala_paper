@@ -1,0 +1,385 @@
+method: slurm   # Which execution plugin to use. By default this is 'shell' which uses the integrated
+# shell plugin to run tasks in the local shell session.
+modulecmd: false # If your cluster uses Shell Modules to configure software and this is installed in a non-
+# standard location, set this variable to full path to the 'modulecmd' command.
+export_vars: [] # List of environment variables that should copied for the job session.
+# Your cluster manager will advise of any that should not be copied over - this is
+# important with clusters optimised for and running different compute node hardware.
+# There is a command-line option, --export, which will augment the variables provided
+# here.
+thread_control: # List of environment variables that limit multithreading in the submitted software.
+  - OMP_NUM_THREADS
+  - MKL_NUM_THREADS
+  - MKL_DOMAIN_NUM_THREADS
+  - OPENBLAS_NUM_THREADS
+  - GOTO_NUM_THREADS
+silence_warnings: # When generating configurations, don't report these classes of warnings
+  - cuda
+method_opts:
+  shell:
+    queues: false
+    mail_support: false
+    has_parallel_envs: false
+    map_ram: false
+    job_priorities: false
+    array_holds: false
+    architecture: false
+    job_resources: false
+    script_conf: false
+    projects: false
+    run_parallel: true
+    parallel_disable_matches:
+      - '*_gpu'
+    log_to_file: true
+  slurm:
+    memory_in_gb: false # Is SLURM configured to report/take memory values in GB?
+    queues: true # Does this submission method use job queues - normally False only for shell plugin
+    copy_environment: true # Replicate current shell environment to running job. Set this to False where
+    # your cluster nodes are different (e.g. different CPU generations) and the cluster
+    # is setup to run hardware optimised software. In this case, if you need environment
+    # variables to be copied to the job's session use the --export
+    has_parallel_envs: false # SLURM does not use parallel environment settings
+    script_conf: true # Whether the --usescript option is supported
+    mail_support: false # Enable Emailing end-user about job status
+    mail_modes: # What mail modes are supported and the queue mail arguments to set
+      b: # Email on job start
+        - BEGIN # Mail on job start
+      e: # Email on job end
+        - END # Mail on job end
+      a: # Email on job issue
+        - FAIL # Mail on job fail
+        - REQUEUE # Mail on job requeue
+      f: # Email on all events
+        - ALL # Mail on all events
+      n: # Never email
+        - NONE # No mail
+    mail_mode: f # Default mail mode from above
+    # If your system is configured with MaxMemPerCPU with accounting
+    # then this could be set to False as the system should automatically
+    # increase the number of CPUs required to satisfy memory requirements
+    notify_ram_usage: true # Whether to tell Slurm how much RAM has been specified
+    # WARNING, your job will be killed if it exceeds this RAM allocation.
+    # This option is important if you have more than one node memory size within
+    # a partition.
+    set_time_limit: true # Whether to tell Slurm the requested runtime (in minutes)
+    # WARNING, your job will be killed if it exceeds this time
+    array_holds: true # Array holds supported? - Requires Slurm 16.05+
+    array_limit: true # Array limits - is limiting the number of concurrent array tasks supported?
+    projects: true # Whether to support accounts (used for accounting/billing)
+    keep_jobscript: true # Do you want to always keep the script used to submit the job to the cluster? The script
+    # will include reproducibility information, e.g. date/time submitted, command line
+    # specified, version of fsl_sub and grid plugin, environment variables passed/inherited
+    # (for systems that must not automatically inherit all variables) and modules loaded
+    # (where a system used modules). Users will not be able to overwrite this.
+    preserve_modules: false # Do you want to load your currently loaded modules in the cluster job?
+    # If your system uses shell modules to configure environment variables then enable
+    # this.
+    add_module_paths: [] # If preserve_modules is set and you need to add additional
+    # folders to the MODULESPATH environment variable in the job's environment then
+    # add these paths to this list
+    strict_dependencies: false # Do you want to allow subsequent jobs in a pipeline to run even
+    # if an earlier job fails - equivalent environment variable FSLSUB_STRICTDEPS (0=False)
+    allow_nested_queuing: true # Do you want fsl_sub to be able to submit to a cluster when already
+    # running in a batch job. See also FSLSUB_NESTED environment variable.
+queues:
+  radiology: # Queue name
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 5 # Group partitions with the same integer then order by priority
+    time: 527039 # Maximum job run time in minutes
+    max_slots: 160 # Maximum number of threads/slots on a queue
+    max_size: 1010 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 4 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - a100
+  cpu_dev: # Queue name
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 1 # Group partitions with the same integer then order by priority
+    time: 240 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 327 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+  cpu_short: # Queue name
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 2 # Group partitions with the same integer then order by priority
+    time: 720 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 327 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+  cpu_medium: # Queue name
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 3 # Group partitions with the same integer then order by priority
+    time: 7200 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 327 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+  cpu_long: # Queue name
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 4 # Group partitions with the same integer then order by priority
+    time: 40320 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 327 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+  fn_short: # Queue name
+  # Partition contains nodes with different numbers of CPUs
+  # Partition contains nodes with different amounts of memory, consider switching on RAM nofitication
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 2 # Group partitions with the same integer then order by priority
+    time: 720 # Maximum job run time in minutes
+    max_slots: 64 # Maximum number of threads/slots on a queue
+    max_size: 1800 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+  fn_medium: # Queue name
+  # Partition contains nodes with different numbers of CPUs
+  # Partition contains nodes with different amounts of memory, consider switching on RAM nofitication
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 3 # Group partitions with the same integer then order by priority
+    time: 7200 # Maximum job run time in minutes
+    max_slots: 64 # Maximum number of threads/slots on a queue
+    max_size: 1800 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+  fn_long: # Queue name
+  # Partition contains nodes with different numbers of CPUs
+  # Partition contains nodes with different amounts of memory, consider switching on RAM nofitication
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 4 # Group partitions with the same integer then order by priority
+    time: 40320 # Maximum job run time in minutes
+    max_slots: 64 # Maximum number of threads/slots on a queue
+    max_size: 1800 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+  gpu4_dev: # Queue name
+  # 'Queue name looks like it might be a queue supporting co-processors. Cannot auto-configure.'
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 1 # Group partitions with the same integer then order by priority
+    time: 240 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 327 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 4 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - v100
+  gpu4_short: # Queue name
+  # 'Queue name looks like it might be a queue supporting co-processors. Cannot auto-configure.'
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 2 # Group partitions with the same integer then order by priority
+    time: 720 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 327 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 4 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - v100
+  gpu4_medium: # Queue name
+  # 'Queue name looks like it might be a queue supporting co-processors. Cannot auto-configure.'
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 3 # Group partitions with the same integer then order by priority
+    time: 4320 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 327 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 4 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - v100
+  gpu4_long: # Queue name
+  # 'Queue name looks like it might be a queue supporting co-processors. Cannot auto-configure.'
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 4 # Group partitions with the same integer then order by priority
+    time: 40320 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 327 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 4 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - v100
+  gpu8_short: # Queue name
+  # Partition contains nodes with different amounts of memory, consider switching on RAM nofitication
+  # 'Queue name looks like it might be a queue supporting co-processors. Cannot auto-configure.'
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 2 # Group partitions with the same integer then order by priority
+    time: 720 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 737 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 8 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - v100
+  gpu8_medium: # Queue name
+  # Partition contains nodes with different amounts of memory, consider switching on RAM nofitication
+  # 'Queue name looks like it might be a queue supporting co-processors. Cannot auto-configure.'
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 3 # Group partitions with the same integer then order by priority
+    time: 4320 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 737 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 8 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - v100
+  gpu8_long: # Queue name
+  # Partition contains nodes with different amounts of memory, consider switching on RAM nofitication
+  # 'Queue name looks like it might be a queue supporting co-processors. Cannot auto-configure.'
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 4 # Group partitions with the same integer then order by priority
+    time: 40320 # Maximum job run time in minutes
+    max_slots: 40 # Maximum number of threads/slots on a queue
+    max_size: 709 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 8 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - v100
+  a100_dev: # Queue name
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 1 # Group partitions with the same integer then order by priority
+    time: 240 # Maximum job run time in minutes
+    max_slots: 48 # Maximum number of threads/slots on a queue
+    max_size: 480 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 4 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - a100
+  a100_short: # Queue name
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 2 # Group partitions with the same integer then order by priority
+    time: 4320 # Maximum job run time in minutes
+    max_slots: 48 # Maximum number of threads/slots on a queue
+    max_size: 480 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 4 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - a100
+  a100_long: # Queue name
+  # default: true # Is this the default partition?
+  # priority: 1 # Priority in group - higher wins
+    group: 4 # Group partitions with the same integer then order by priority
+    time: 40320 # Maximum job run time in minutes
+    max_slots: 48 # Maximum number of threads/slots on a queue
+    max_size: 480 # Maximum RAM size of a job in GB
+    slot_size: Null # Slot size is normally irrelevant on SLURM - set this to memory (in GB) per thread if required
+# CUDA Co-processor available
+    copros:
+      cuda:
+        max_quantity: 4 # Maximum available per node
+        exclusive: false # Does this only run jobs requiring this co-processor?
+# Default, using 'gpu' resource:
+        classes:
+          - a100
+coproc_opts: # Example 'cuda' coprocessor - this will need modifying
+  cuda: # A co-processor called 'cuda' - queues with this coprocessor
+    # should be given a sub-dictionary, 'copros', containing a further dictionary
+    # key 'cuda' containing entries, 'max_quantity' (most number of cards per node) and 'classes' (list)
+    # of 'class_type' keys defined below
+    class_constraint: false # Does the SURLM cluster use constraints to specify GPU types rather than
+    # adding it to the GRES? If your cluster instructions say use --constraint (or -C) <class> then set this
+    # to true.
+    # If you are told to use --gres gpu:<class>:<qty> then set this to false.
+    include_more_capable: false # Should we also allow running on more capable hardware? Requires constraints to be used
+    uses_modules: true # Should we use Shell modules to load the environment settings for the hardware?
+    module_parent: cuda # What is the name of the parent module for this co-processor?
+    presence_test: nvidia-smi # Name of a script/binary (full path if unlikely to be in user's PATH) which confirms coprocessor is available
+    resource: gpu # Which scheduler resource requests GPU facilities
+    classes: true  # Whether there are multiple coprocessor classes/types
+    class_types:
+      G: # Short code for the types of coprocessors - used on command line and in queue definition
+        resource: TitanX # Queue resource to request (on SLURM this may be a constraint or type)
+        doc: TitanX. No-ECC, single-precision workloads # Documentation about this hardware
+        capability: 1 # Capability level for this hardware, integer value that orders by features - higher = more capable
+      K:
+        resource: k80
+        doc: >
+          Kepler. ECC, double-, and single-precision workloads
+        capability: 2
+      P:
+        resource: p100
+        doc: >
+          Pascal. ECC, double-, single, and half-precision workloads
+        capability: 3
+      V:
+        resource: v100
+        doc: >
+          Volta. ECC, double-, single-, half-
+          and quarter-precision workloads
+        capability: 4
+      A:
+        resource: a100
+        doc: >
+          Ampere. ECC, double-, single-, half-
+          and Tensor - single-, half-, quarter- and eigth-precision
+          workloads
+        capability: 5
+      a100: # Short code for the type of coprocessor - used on the command line and in queue definition
+        resource: a100 # Queue resource to request
+        doc: Request a100
+        capability: 6 # a100
+      v100: # Short code for the type of coprocessor - used on the command line and in queue definition
+        resource: v100 # Queue resource to request
+        doc: Request v100
+        capability: 5 # v100
+    default_class: V # If classes are available and  a class is not specified, which class should we use?
+
