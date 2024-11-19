@@ -10,10 +10,10 @@ failed_qc <- c('sub-CC510255', #abnormality in left temporal pole
                'sub-CC621011', #segmentation errors from large ventricles
                'sub-CC621080', #segmentation errors
                # 'sub-CC710214', #parietal lobe cutoff
+               'sub-CC710551', #motion artifacts in DWI
                'sub-CC711027', #severe motion artifacts in T1
                # 'sub-CC712027', #parietal lobe cutoff
-               'sub-CC721434', #segmentation errors from large ventricles
-               'sub-CC710551' #motion artifacts in DWI
+               'sub-CC721434' #segmentation errors from large ventricles
 )
 
 #define remove_outliers function
@@ -75,110 +75,203 @@ thickness_table <- tableby(formulize('SCD', names(thickness)[3:72]),
                            data = thickness, numeric.test="wt", total = F)
 summary(thickness_table, text = T)
 
-####diffusion group means
-#read in diffusion tables
-aparc2diff_files <- list.files(path = "freesurfer", 
+####diffusion and MTR group means
+#read in diffusion and MTR tables
+aparc2meas_files <- list.files(path = "freesurfer", 
                                pattern = "aparc.*aseg.*\\.*tsv", 
                                full.names = T)
-for (i in 1:length(aparc2diff_files)) {
+for (i in 1:length(aparc2meas_files)) {
   assign(gsub(".tsv", "", 
-              gsub("freesurfer.aparc.", "", make.names(aparc2diff_files[i]))), 
-         read.delim(aparc2diff_files[i]))
+              gsub("freesurfer.aparc.", "", make.names(aparc2meas_files[i]))), 
+         read.delim(aparc2meas_files[i]))
 }
-AD_sig2diff_files <- list.files(path = "freesurfer", 
+AD_sig2meas_files <- list.files(path = "freesurfer", 
                                 pattern = "?h_AD_sig2.*\\.*tsv", 
                                 full.names = T)
-for (i in 1:length(AD_sig2diff_files)) {
+for (i in 1:length(AD_sig2meas_files)) {
   assign(gsub(".tsv", "", 
-              gsub("freesurfer.", "", make.names(AD_sig2diff_files[i]))), 
-         read.delim(AD_sig2diff_files[i]))
+              gsub("freesurfer.", "", make.names(AD_sig2meas_files[i]))), 
+         read.delim(AD_sig2meas_files[i]))
 }
 
 fit_FWF <- aseg2fit_FWF %>%
-  left_join(., AD_sig2fit_FWF) %>%
+  left_join(., lh_AD_sig2fit_FWF) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2fit_FWF) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
+  select(!CSF & !ends_with("Ventricle")) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-FWF_table <- tableby(formulize('SCD', names(fit_FWF)[4:102]),
+FWF_table <- tableby(formulize('SCD', names(fit_FWF)[4:101]),
                      data = fit_FWF, numeric.test="wt", total = FALSE)
 summary(FWF_table, text = T)
 
-fit_NDI <- fit_NDI %>% 
+fit_NDI <- aseg2fit_NDI %>%
+  left_join(., lh_AD_sig2fit_NDI) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2fit_NDI) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
+  select(!CSF & !ends_with("Ventricle")) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 NDI_table <- tableby(formulize('SCD', names(fit_NDI)[4:101]),
                      data = fit_NDI, numeric.test="wt", total = FALSE)
 summary(NDI_table, text = T)
 
-fit_ODI <- fit_ODI %>% 
+fit_ODI <- aseg2fit_ODI %>%
+  left_join(., lh_AD_sig2fit_ODI) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2fit_ODI) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
+  select(!CSF & !ends_with("Ventricle")) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 ODI_table <- tableby(formulize('SCD', names(fit_ODI)[4:101]),
                      data = fit_ODI, numeric.test="wt", total = FALSE)
 summary(ODI_table, text = T)
 
-dti_fa <- dti_fa %>%
+dti_fa <- aseg2dti_fa %>%
+  left_join(., lh_AD_sig2dti_fa) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dti_fa) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers))
+  select(!CSF & !ends_with("Ventricle")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 fa_table <- tableby(formulize('SCD', names(dti_fa)[4:101]),
-                    data = dti_fa, numeric.test="wt", total=F)
-summary(fa_table, text=T)
+                     data = dti_fa, numeric.test="wt", total = FALSE)
+summary(fa_table, text = T)
 
-dti_md <- dti_md %>%
+dti_md <- aseg2dti_md %>%
+  left_join(., lh_AD_sig2dti_md) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dti_md) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers))
+  select(!CSF & !ends_with("Ventricle")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 md_table <- tableby(formulize('SCD', names(dti_md)[4:101]),
-                    data = dti_md, numeric.test="wt", total=F)
-summary(md_table, text=T)
+                    data = dti_md, numeric.test="wt", total = FALSE)
+summary(md_table, text = T)
 
-dti_rd <- dti_rd %>%
+dti_rd <- aseg2dti_rd %>%
+  left_join(., lh_AD_sig2dti_rd) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dti_rd) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers))
+  select(!CSF & !ends_with("Ventricle")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 rd_table <- tableby(formulize('SCD', names(dti_rd)[4:101]),
-                    data = dti_rd, numeric.test="wt", total=F)
-summary(rd_table, text=T)
+                    data = dti_rd, numeric.test="wt", total = FALSE)
+summary(rd_table, text = T)
 
-dti_ad <- dti_ad %>%
+dti_ad <- aseg2dti_ad %>%
+  left_join(., lh_AD_sig2dti_ad) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dti_ad) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers))
+  select(!CSF & !ends_with("Ventricle")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 ad_table <- tableby(formulize('SCD', names(dti_ad)[4:101]),
-                    data = dti_ad, numeric.test="wt", total=F)
-summary(ad_table, text=T)
+                    data = dti_ad, numeric.test="wt", total = FALSE)
+summary(ad_table, text = T)
 
-dki_kfa <- dki_kfa %>%
+dki_kfa <- aseg2dki_kfa %>%
+  left_join(., lh_AD_sig2dki_kfa) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dki_kfa) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers))
+  select(!CSF & !ends_with("Ventricle")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 kfa_table <- tableby(formulize('SCD', names(dki_kfa)[4:101]),
-                    data = dki_kfa, numeric.test="wt", total=F)
-summary(kfa_table, text=T)
+                    data = dki_kfa, numeric.test="wt", total = FALSE)
+summary(kfa_table, text = T)
 
-dki_mk <- dki_mk %>%
+dki_mk <- aseg2dki_mk %>%
+  left_join(., lh_AD_sig2dki_mk) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dki_mk) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers))
+  select(!CSF & !ends_with("Ventricle")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 mk_table <- tableby(formulize('SCD', names(dki_mk)[4:101]),
-                     data = dki_mk, numeric.test="wt", total=F)
-summary(mk_table, text=T)
+                     data = dki_mk, numeric.test="wt", total = FALSE)
+summary(mk_table, text = T)
 
-dki_rk <- dki_rk %>%
+dki_rk <- aseg2dki_rk %>%
+  left_join(., lh_AD_sig2dki_rk) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dki_rk) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers))
+  select(!CSF & !ends_with("Ventricle")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 rk_table <- tableby(formulize('SCD', names(dki_rk)[4:101]),
-                    data = dki_rk, numeric.test="wt", total=F)
-summary(rk_table, text=T)
+                     data = dki_rk, numeric.test="wt", total = FALSE)
+summary(rk_table, text = T)
 
-dki_ak <- dki_ak %>%
+dki_ak <- aseg2dki_ak %>%
+  left_join(., lh_AD_sig2dki_ak) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dki_ak) %>%
+  rename(rh_AD_signature = AD_signature) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers))
+  select(!CSF & !ends_with("Ventricle")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 ak_table <- tableby(formulize('SCD', names(dki_ak)[4:101]),
-                    data = dki_ak, numeric.test="wt", total=F)
-summary(ak_table, text=T)
+                     data = dki_ak, numeric.test="wt", total = FALSE)
+summary(ak_table, text = T)
+
+#extract SCD status from mti_over_55 table for each TR
+scd_status_tr30 <- mti_over_55_tr30 %>% select(participant_id, SCD) %>%
+  filter(!participant_id %in% failed_qc)
+scd_status_tr30$SCD <- factor(scd_status_tr30$SCD,
+                         levels = c(1,0),
+                         labels = c('SCD', 'Control'))
+scd_status_tr50 <- mti_over_55_tr50 %>% select(participant_id, SCD) %>%
+  filter(!participant_id %in% failed_qc)
+scd_status_tr50$SCD <- factor(scd_status_tr50$SCD,
+                              levels = c(1,0),
+                              labels = c('SCD', 'Control'))
+
+#mtr stats for each tr
+mtr_tr30 <- aseg2mtr %>%
+  left_join(., lh_AD_sig2mtr) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2mtr) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status_tr30, .) %>%
+  select(!CSF & !ends_with("Ventricle") & !ends_with("Vent")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+mtr_tr30_table <- tableby(formulize('SCD', names(mtr_tr30)[4:101]),
+                    data = mtr_tr30, numeric.test="wt", total = FALSE)
+summary(mtr_tr30_table, text = T)
+
+mtr_tr50 <- aseg2mtr %>%
+  left_join(., lh_AD_sig2mtr) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2mtr) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status_tr50, .) %>%
+  select(!CSF & !ends_with("Ventricle") & !ends_with("Vent")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+mtr_tr50_table <- tableby(formulize('SCD', names(mtr_tr50)[4:101]),
+                          data = mtr_tr50, numeric.test="wt", total = FALSE)
+summary(mtr_tr50_table, text = T)

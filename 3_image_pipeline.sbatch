@@ -20,6 +20,7 @@ j=${subj_list[$subj_num]}
 
 rawdwi=$basedir/raw/$j/dwi/${j}_dwi
 rawanat=$basedir/raw/$j/anat/${j}
+rawmti=$basedir/raw/$j/mti/${j}
 designerdir=$projectdir/dwi_processed/$j/
 intdir=$designerdir/intermediate_nifti/
 mkdir -p $intdir
@@ -51,7 +52,7 @@ if [ ! -f $freesurferdir/$j/label/BA_exvivo.thresh.ctab ]; then
 	recon-all -motioncor -talairach -nuintensitycor -normalization -gcareg -pctsurfcon -segstats -wmparc -balabels -subjid ${j} -sd ${freesurferdir} -threads 4 -no-isrunning
 fi
 ##AD signature regions 
-if [ ! -f $freesurferdir/$j/stats/rh.AD_sig_volume.stats ]; then
+if [ ! -f $freesurferdir/$j/stats/rh.AD_sig_thickness.stats ]; then
 	cd $freesurferdir/$j
 	side=( lh rh )
 	for s in "${side[@]}"; do
@@ -63,7 +64,6 @@ if [ ! -f $freesurferdir/$j/stats/rh.AD_sig_volume.stats ]; then
 		done
 		mri_mergelabels -d ${s}_AD_sig -o label/$s.AD_sig.label
 		mri_segstats --slabel ${j} ${s} label/$s.AD_sig.label --i surf/$s.thickness --excludeid 0 --sum stats/$s.AD_sig_thickness.stats
-		mri_segstats --slabel ${j} ${s} label/$s.AD_sig.label --i surf/$s.volume --excludeid 0 --sum stats/$s.AD_sig_volume.stats
 	done
 	rm -rf a2009s
 	rm -rf *h_AD_sig
@@ -273,4 +273,36 @@ if [ ! -f $freesurferdir/$j/stats/lh_AD_sig2fit_ODI.stats ]; then
 	done
 fi
 
+#mtr analysis
+if [ ! -f $freesurferdir/$j/mti/mtr.nii.gz ] && [ -f ${rawmti}_mti_bl.nii.gz ]; then
+	#copy raw mti images
+	mkdir -p $freesurferdir/$j/mti/intermediate/
+	cd $freesurferdir/$j/mti
+	cp ${rawmti}_mti_bl.nii.gz mti_bl_raw.nii.gz
+	cp  ${rawmti}_mti.nii.gz mti_raw.nii.gz
+	#register mti_bl and mti
+	flirt -in mti_raw -ref mti_bl_raw -dof 6 -out intermediate/1_mti_reg
+	#degibbs mti_bl and registered mti
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrdegibbs mti_bl_raw.nii.gz intermediate/2_mti_bl_degibbs.nii.gz
+	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif mrdegibbs intermediate/1_mti_reg.nii.gz intermediate/2_mti_degibbs.nii.gz
+	#calculate mtr
+	fslmaths intermediate/2_mti_bl_degibbs.nii.gz -sub intermediate/2_mti_degibbs.nii.gz -div intermediate/2_mti_bl_degibbs.nii.gz -thr 0 -uthr 1 mtr.nii.gz
+fi
 
+if [ ! -f $freesurferdir/$j/stats/aparc+aseg2mtr.stats ] && [ -f ${rawmti}_mti_bl.nii.gz ]; then
+	#register mtr to t1
+	cd $freesurferdir/$j
+	mri_easyreg --ref mri/T1.mgz --flo mti/mtr.nii.gz --ref_seg mri/synthseg.mgz --flo_seg mti/mtr_synthseg.mgz --bak_field mti/fs2mtr_field.mgz --threads 4 --affine_only
+	#register aparc+aseg to mtr, using the inverse of the mtr to t1 registration
+	mri_easywarp --i mri/aparc+aseg.mgz --o mti/aparc+aseg2mtr.mgz --field mti/fs2mtr_field.mgz --threads 4 --nearest
+	mri_easywarp --i mri/aparc.a2009s+aseg.mgz --o mti/aparc.a2009s+aseg2mtr.mgz --field mti/fs2mtr_field.mgz --threads 4 --nearest
+	mri_segstats --seg mti/aparc+aseg2mtr.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i mti/mtr.nii.gz --sum stats/aparc+aseg2mtr.stats
+fi
+
+if [ ! -f $freesurferdir/$j/stats/lh_AD_sig2mtr.stats ] && [ -f ${rawmti}_mti_bl.nii.gz ]; then
+	side=( rh lh )
+	for s in "${side[@]}"; do
+		mri_binarize --i mti/aparc.a2009s+aseg2mtr.mgz --match-ctab $projectdir/${s}_AD_signature_LUT.txt --o mti/${s}_mtr_AD_sig.mgz
+		mri_segstats --seg mti/${s}_mtr_AD_sig.mgz --mask mti/${s}_mtr_AD_sig.mgz --excludeid 0 --ctab $projectdir/${s}_AD_signature_LUT.txt --i mti/mtr.nii.gz --sum stats/${s}_AD_sig2mtr.stats
+	done
+fi
