@@ -39,24 +39,11 @@ participants$SCD[participants$SCD == 1] <- FALSE
 participants$SCD[participants$SCD == 2] <- TRUE
 participants$SCD[is.na(participants$SCD)] <- FALSE
 
-### filter by age and if MTI is available ###
-participants_over_55 <- participants %>% filter(age > 55)
+#all DWI participants
 #replace with location of your dwi participants.tsv
-mti_participants = read_tsv(file.path(data_dir, "imaging/mti/participants.tsv")) %>%
+dwi_participants = read_tsv(file.path(data_dir, "imaging/dwi/participants.tsv")) %>%
   select(participant_id) %>%
-    mutate(participant_id = str_replace(participant_id, "CC", "sub-CC")) %>%
   left_join(., participants, by='participant_id')
-<<<<<<< HEAD
+#DWI participants over age 55 with fmap
 dwi_over_55 = dwi_participants %>% filter(age > 55)
-write_tsv(dwi_over_55, "dwi_over_55.tsv")
-=======
-mti_over_55 = mti_participants %>% filter(age > 55) %>% 
-  filter(participant_id != "sub-CC410129") #error in scanning protocol, mti TR=34ms bl TR=30ms
-mti_over_55[mti_over_55$participant_id=="sub-CC610050", "mt_tr"] <- 30
-mti_over_55[mti_over_55$participant_id=="sub-CC620821", "mt_tr"] <- 50
-write_tsv(mti_over_55, "mti_over_55.tsv")
-mti_over_55_tr50 <- mti_over_55 %>% filter(mt_tr == 50)
-write_tsv(mti_over_55_tr50, "mti_over_55_tr50.tsv")
-mti_over_55_tr30 <- mti_over_55 %>% filter(mt_tr == 30)
-write_tsv(mti_over_55_tr30, "mti_over_55_tr30.tsv")
->>>>>>> 13fc8b3d3ff9ffd11e3a0fdc2a6d9d234e25f17a
+write_tsv(dwi_over_55, "dwi_over_55.tsv") #write to file

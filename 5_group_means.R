@@ -3,13 +3,15 @@ library(arsenal)
 
 failed_qc <- c('sub-CC510255', #abnormality in left temporal pole
                'sub-CC510438', #abnormality in left frontal lobe
-               'sub-CC610308', #parietal lobe cutoff
-               'sub-CC620466', #parietal lobe cutoff
+               # 'sub-CC610308', #parietal lobe cutoff
+               # 'sub-CC610469', #parietal lobe cutoff
+               # 'sub-CC620466', #parietal lobe cutoff
                'sub-CC620821', #segmentation errors from large ventricles
                'sub-CC621011', #segmentation errors from large ventricles
                'sub-CC621080', #segmentation errors
+               # 'sub-CC710214', #parietal lobe cutoff
                'sub-CC711027', #severe motion artifacts in T1
-               'sub-CC712027', #parietal lobe cutoff
+               # 'sub-CC712027', #parietal lobe cutoff
                'sub-CC721434', #segmentation errors from large ventricles
                'sub-CC710551' #motion artifacts in DWI
 )
@@ -44,32 +46,32 @@ scd_status$SCD <- factor(scd_status$SCD,
 aseg = read_tsv("freesurfer/asegtable.tsv") %>%
   rename(participant_id=`Measure:volume`) %>%
   mutate(across(c(2:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) #normalize by intracranial volume
-#import wmparc stats table (white matter volumes)
-wmparc = read_tsv("freesurfer/wmparctable.tsv") %>%
-  rename(participant_id=`Measure:volume`) %>%
-  mutate(across(c(2:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) #normalize by intracranial volume
-#create volumes table
-volumes <- left_join(scd_status, aseg) %>% #join gray matter volumes with SCD status
-  left_join(., wmparc) %>% #add white matter volumes
+aseg <- left_join(scd_status, aseg) %>% #join gray matter volumes with SCD status
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-names(volumes) <- make.names(names(volumes))
-volumes_table <- tableby(formulize('SCD', names(volumes)[3:134]), 
-                         data = volumes, numeric.test="wt", total = F) 
-summary(volumes_table, text = TRUE)
+names(aseg) <- make.names(names(aseg))
+aseg_table <- tableby(formulize('SCD', names(aseg)[3:54]), 
+                         data = aseg, numeric.test="wt", total = F) 
+summary(aseg_table, text = TRUE)
 
-#import left aparc stats table (cortical thickness)
-lh_aparc = read_tsv("freesurfer/lh_aparctable.tsv") %>%
-  rename(participant_id=lh.aparc.thickness)
-#import right aparc stats table (cortical thickness)
-rh_aparc = read_tsv("freesurfer/rh_aparctable.tsv") %>%
-  rename(participant_id=rh.aparc.thickness)
-#create thickness table
-thickness <- left_join(scd_status, lh_aparc) %>% #join left cortical thickness with SCD stats
-  left_join(., rh_aparc) %>% #add right cortical thickness
-  #remove "_thickness" from column names
-  rename_with(~ str_remove(., "_thickness")) %>%
+#import left aparc stats tables (cortical thickness and volume)
+lh_AD_sig_thickness <- read_tsv("freesurfer/lh_AD_sig_thickness.tsv") %>%
+  rename(participant_id=`Measure:mean`, lh_AD_sig_thickness=Seg0001)
+lh_aparc_thickness = read_tsv("freesurfer/lh_aparctable_thickness.tsv") %>%
+  rename(participant_id=lh.aparc.thickness) %>%
+  left_join(., lh_AD_sig_thickness) %>%
+  select(!(lh_MeanThickness_thickness:eTIV))
+#import right aparc stats tables (cortical thickness and volume)
+rh_AD_sig_thickness <- read_tsv("freesurfer/rh_AD_sig_thickness.tsv") %>%
+  rename(participant_id=`Measure:mean`, rh_AD_sig_thickness=Seg0001)
+rh_aparc_thickness = read_tsv("freesurfer/rh_aparctable_thickness.tsv") %>%
+  rename(participant_id=rh.aparc.thickness) %>%
+  left_join(., rh_AD_sig_thickness) %>%
+  select(!(rh_MeanThickness_thickness:eTIV))
+#create aparc table
+thickness <- left_join(scd_status, lh_aparc_thickness) %>% #join left cortical thickness with SCD stats
+  left_join(., rh_aparc_thickness) %>% #add right cortical thickness
   mutate(across(where(is.double), remove_outliers))
-thickness_table <- tableby(formulize('SCD', names(thickness)[3:74]), 
+thickness_table <- tableby(formulize('SCD', names(thickness)[3:72]), 
                            data = thickness, numeric.test="wt", total = F)
 summary(thickness_table, text = T)
 
@@ -80,15 +82,24 @@ aparc2diff_files <- list.files(path = "freesurfer",
                                full.names = T)
 for (i in 1:length(aparc2diff_files)) {
   assign(gsub(".tsv", "", 
-              gsub("freesurfer.aparc.aseg2", "", make.names(aparc2diff_files[i]))), 
+              gsub("freesurfer.aparc.", "", make.names(aparc2diff_files[i]))), 
          read.delim(aparc2diff_files[i]))
 }
+AD_sig2diff_files <- list.files(path = "freesurfer", 
+                                pattern = "?h_AD_sig2.*\\.*tsv", 
+                                full.names = T)
+for (i in 1:length(AD_sig2diff_files)) {
+  assign(gsub(".tsv", "", 
+              gsub("freesurfer.", "", make.names(AD_sig2diff_files[i]))), 
+         read.delim(AD_sig2diff_files[i]))
+}
 
-fit_FWF <- fit_FWF %>% 
+fit_FWF <- aseg2fit_FWF %>%
+  left_join(., AD_sig2fit_FWF) %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-FWF_table <- tableby(formulize('SCD', names(fit_FWF)[4:106]),
+FWF_table <- tableby(formulize('SCD', names(fit_FWF)[4:102]),
                      data = fit_FWF, numeric.test="wt", total = FALSE)
 summary(FWF_table, text = T)
 
@@ -96,7 +107,7 @@ fit_NDI <- fit_NDI %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-NDI_table <- tableby(formulize('SCD', names(fit_NDI)[4:106]),
+NDI_table <- tableby(formulize('SCD', names(fit_NDI)[4:101]),
                      data = fit_NDI, numeric.test="wt", total = FALSE)
 summary(NDI_table, text = T)
 
@@ -104,7 +115,7 @@ fit_ODI <- fit_ODI %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-ODI_table <- tableby(formulize('SCD', names(fit_ODI)[4:106]),
+ODI_table <- tableby(formulize('SCD', names(fit_ODI)[4:101]),
                      data = fit_ODI, numeric.test="wt", total = FALSE)
 summary(ODI_table, text = T)
 
@@ -112,7 +123,7 @@ dti_fa <- dti_fa %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers))
-fa_table <- tableby(formulize('SCD', names(dti_fa)[4:106]),
+fa_table <- tableby(formulize('SCD', names(dti_fa)[4:101]),
                     data = dti_fa, numeric.test="wt", total=F)
 summary(fa_table, text=T)
 
@@ -120,7 +131,7 @@ dti_md <- dti_md %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers))
-md_table <- tableby(formulize('SCD', names(dti_md)[4:106]),
+md_table <- tableby(formulize('SCD', names(dti_md)[4:101]),
                     data = dti_md, numeric.test="wt", total=F)
 summary(md_table, text=T)
 
@@ -128,7 +139,7 @@ dti_rd <- dti_rd %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers))
-rd_table <- tableby(formulize('SCD', names(dti_rd)[4:106]),
+rd_table <- tableby(formulize('SCD', names(dti_rd)[4:101]),
                     data = dti_rd, numeric.test="wt", total=F)
 summary(rd_table, text=T)
 
@@ -136,7 +147,7 @@ dti_ad <- dti_ad %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers))
-ad_table <- tableby(formulize('SCD', names(dti_ad)[4:106]),
+ad_table <- tableby(formulize('SCD', names(dti_ad)[4:101]),
                     data = dti_ad, numeric.test="wt", total=F)
 summary(ad_table, text=T)
 
@@ -144,7 +155,7 @@ dki_kfa <- dki_kfa %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers))
-kfa_table <- tableby(formulize('SCD', names(dki_kfa)[4:106]),
+kfa_table <- tableby(formulize('SCD', names(dki_kfa)[4:101]),
                     data = dki_kfa, numeric.test="wt", total=F)
 summary(kfa_table, text=T)
 
@@ -152,7 +163,7 @@ dki_mk <- dki_mk %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers))
-mk_table <- tableby(formulize('SCD', names(dki_mk)[4:106]),
+mk_table <- tableby(formulize('SCD', names(dki_mk)[4:101]),
                      data = dki_mk, numeric.test="wt", total=F)
 summary(mk_table, text=T)
 
@@ -160,7 +171,7 @@ dki_rk <- dki_rk %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers))
-rk_table <- tableby(formulize('SCD', names(dki_rk)[4:106]),
+rk_table <- tableby(formulize('SCD', names(dki_rk)[4:101]),
                     data = dki_rk, numeric.test="wt", total=F)
 summary(rk_table, text=T)
 
@@ -168,6 +179,6 @@ dki_ak <- dki_ak %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   mutate(across(where(is.double), remove_outliers))
-ak_table <- tableby(formulize('SCD', names(dki_ak)[4:106]),
+ak_table <- tableby(formulize('SCD', names(dki_ak)[4:101]),
                     data = dki_ak, numeric.test="wt", total=F)
 summary(ak_table, text=T)

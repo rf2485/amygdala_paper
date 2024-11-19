@@ -50,6 +50,24 @@ if [ ! -f $freesurferdir/$j/label/BA_exvivo.thresh.ctab ]; then
 	##create files necessary for bbregister
 	recon-all -motioncor -talairach -nuintensitycor -normalization -gcareg -pctsurfcon -segstats -wmparc -balabels -subjid ${j} -sd ${freesurferdir} -threads 4 -no-isrunning
 fi
+##AD signature regions 
+if [ ! -f $freesurferdir/$j/stats/rh.AD_sig_volume.stats ]; then
+	cd $freesurferdir/$j
+	side=( lh rh )
+	for s in "${side[@]}"; do
+		mri_annotation2label --hemi ${s} --subject ${j} --annotation aparc.a2009s --outdir a2009s
+		mkdir ${s}_AD_sig
+		AD_sig_list=( G_front_sup G_oc-temp_med-Parahip G_pariet_inf-Angular G_pariet_inf-Supramar G_parietal_sup G_precuneus G_temporal_inf Pole_temporal S_front_inf )
+		for roi in "${AD_sig_list[@]}"; do
+			cp a2009s/$s.$roi.label ${s}_AD_sig
+		done
+		mri_mergelabels -d ${s}_AD_sig -o label/$s.AD_sig.label
+		mri_segstats --slabel ${j} ${s} label/$s.AD_sig.label --i surf/$s.thickness --excludeid 0 --sum stats/$s.AD_sig_thickness.stats
+		mri_segstats --slabel ${j} ${s} label/$s.AD_sig.label --i surf/$s.volume --excludeid 0 --sum stats/$s.AD_sig_volume.stats
+	done
+	rm -rf a2009s
+	rm -rf *h_AD_sig
+fi
 
 #diffusion preproc step 1
 if [ ! -f $designerdir/residual.nii ]; then
@@ -218,16 +236,19 @@ if [ ! -f $freesurferdir/$j/diffusion/aparc+aseg2diff_NODDI_mask.mgz ]; then
 	mri_mask diffusion/aparc+aseg2diff_FWF_mask.mgz $designerdir/ODI_mask.nii diffusion/aparc+aseg2diff_NODDI_mask.mgz
 fi
 	## use aparc.a2009s+aseg to generate Dickerson AD signature regions mask, then apply NODDI masks
-if [ ! -f $freesurferdir/$j/diffusion/diff_AD_sig_NODDI_mask.mgz ]; then
+if [ ! -f $freesurferdir/$j/diffusion/lh_diff_AD_sig_NODDI_mask.mgz ]; then
 	cd $freesurferdir/$j/	
 	mri_vol2vol --mov diffusion/B0.nii --targ mri/aparc.a2009s+aseg.mgz --inv --interp nearest --o diffusion/aparc.a2009s+aseg2diff.mgz --reg diffusion/b02fs.lta --no-save-reg
-	mri_binarize --i diffusion/aparc.a2009s+aseg2diff.mgz --match-ctab $projectdir/AD_signature_LUT.txt --o diffusion/diff_AD_sig.mgz
-	mri_mask diffusion/diff_AD_sig.mgz $designerdir/FWF_mask.nii diffusion/diff_AD_sig_FWF_mask.mgz
-	mri_mask diffusion/diff_AD_sig_FWF_mask.mgz $designerdir/ODI_mask.nii diffusion/diff_AD_sig_NODDI_mask.mgz  	
+	side=( rh lh )
+	for s in "${side[@]}"; do
+		mri_binarize --i diffusion/aparc.a2009s+aseg2diff.mgz --match-ctab $projectdir/${s}_AD_signature_LUT.txt --o diffusion/${s}_diff_AD_sig.mgz
+		mri_mask diffusion/${s}_diff_AD_sig.mgz $designerdir/FWF_mask.nii diffusion/${s}_diff_AD_sig_FWF_mask.mgz
+		mri_mask diffusion/${s}_diff_AD_sig_FWF_mask.mgz $designerdir/ODI_mask.nii diffusion/${s}_diff_AD_sig_NODDI_mask.mgz
+	done  	
 fi	
 
 	## apply registered aparc+aseg and AD signature mask to diffusion metrics to generate stats
-if [ ! -f $freesurferdir/$j/stats/AD_sig2fit_ODI.stats ]; then	
+if [ ! -f $freesurferdir/$j/stats/lh_AD_sig2fit_ODI.stats ]; then	
 	cd $freesurferdir/$j/
 	pyd_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk dti_ad dti_fa dti_md dti_rd )
 	for meas in "${pyd_list[@]}"; do
@@ -235,14 +256,21 @@ if [ ! -f $freesurferdir/$j/stats/AD_sig2fit_ODI.stats ]; then
 		cp $designerdir/metrics/${meas}.nii diffusion/${meas}.nii
 		### generate stats
 		mri_segstats --seg diffusion/aparc+aseg2diff_NODDI_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii --sum stats/aparc+aseg2${meas}.stats
-		mri_segstats --seg diffusion/diff_AD_sig_NODDI_mask.mgz --excludeid 0 -i diffusion/${meas}.nii --sum stats/AD_sig2${meas}.stats
+		side=( rh lh )
+		for s in "${side[@]}"; do
+			mri_segstats --seg diffusion/${s}_diff_AD_sig_NODDI_mask.mgz --mask diffusion/${s}_diff_AD_sig_NODDI_mask.mgz --excludeid 0 --ctab $projectdir/${s}_AD_signature_LUT.txt --i diffusion/${meas}.nii --sum stats/${s}_AD_sig2${meas}.stats
+		done
 	done
 	### repeat for NODDI	
 	noddi_list=( fit_FWF fit_NDI fit_ODI )
 	for meas in "${noddi_list[@]}"; do
 		cp $designerdir/AMICO/NODDI/${meas}.nii.gz diffusion/
 		mri_segstats --seg diffusion/aparc+aseg2diff_NODDI_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/aparc+aseg2${meas}.stats
-		mri_segstats --seg diffusion/diff_AD_sig_NODDI_mask.mgz --excludeid 0 -i diffusion/${meas}.nii.gz --sum stats/AD_sig2${meas}.stats
+		side=( rh lh )
+		for s in "${side[@]}"; do
+			mri_segstats --seg diffusion/${s}_diff_AD_sig_NODDI_mask.mgz --mask diffusion/${s}_diff_AD_sig_NODDI_mask.mgz --excludeid 0 --ctab $projectdir/${s}_AD_signature_LUT.txt --i diffusion/${meas}.nii.gz --sum stats/${s}_AD_sig2${meas}.stats
+		done
 	done
 fi
+
 
