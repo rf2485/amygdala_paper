@@ -46,6 +46,13 @@ dwi_participants = read_tsv(file.path(data_dir, "imaging/dwi/participants.tsv"))
   left_join(., participants, by='participant_id')
 #DWI participants over age 55
 dwi_over_55 = dwi_participants %>% filter(age > 55)
+write_tsv(dwi_over_55, "dwi_over_55.tsv") #write to file
+### split dwi_over_55 into SCD and controls ###
+scd_dwi = dwi_over_55 %>% filter(SCD == TRUE)
+write_tsv(scd_dwi, "dwi_over_55_scd.tsv")
+ctl_dwi = dwi_over_55 %>% filter(SCD == FALSE)
+write_tsv(ctl_dwi, "dwi_over_55_ctl.tsv")
+
 
 #all MTI participants
 #replace with location of your mti participants.tsv
@@ -58,11 +65,14 @@ mti_over_55 = mti_participants %>% filter(age > 55) %>%
   filter(participant_id != "sub-CC410129") #error in scanning protocol, mti TR=34ms bl TR=30ms
 mti_over_55[mti_over_55$participant_id=="sub-CC610050", "mt_tr"] <- 30 #from json
 mti_over_55[mti_over_55$participant_id=="sub-CC620821", "mt_tr"] <- 50 #from json
-write_tsv(mti_over_55, "mti_over_55.tsv")
 #separate by TR
 mti_over_55_tr50 <- mti_over_55 %>% filter(mt_tr == 50)
-write_tsv(mti_over_55_tr50, "mti_over_55_tr50.tsv")
+scd_tr30 <- mti_over_55_tr30 %>% filter(SCD == T)
+write_tsv(scd_tr30, "mti_over_55_tr30_scd.tsv")
+ctl_tr30 <- mti_over_55_tr30 %>% filter(SCD == F)
+write_tsv(ctl_tr30, "mti_over_55_tr30_ctl.tsv")
 mti_over_55_tr30 <- mti_over_55 %>% filter(mt_tr == 30)
-write_tsv(mti_over_55_tr30, "mti_over_55_tr30.tsv")
-
-write_tsv(dwi_over_55, "dwi_over_55.tsv") #write to file
+scd_tr50 <- mti_over_55_tr50 %>% filter(SCD == T)
+write_tsv(scd_tr50, "mti_over_55_tr50_scd.tsv")
+ctl_tr50 <- mti_over_55_tr50 %>% filter(SCD == F)
+write_tsv(ctl_tr50, "mti_over_55_tr50_ctl.tsv")

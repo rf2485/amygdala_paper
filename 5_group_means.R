@@ -241,15 +241,16 @@ summary(ak_table, text = T)
 scd_status_tr30 <- mti_over_55_tr30 %>% select(participant_id, SCD) %>%
   filter(!participant_id %in% failed_qc)
 scd_status_tr30$SCD <- factor(scd_status_tr30$SCD,
-                         levels = c(1,0),
-                         labels = c('SCD', 'Control'))
+                              levels = c(1,0),
+                              labels = c('SCD', 'Control'))
+
 scd_status_tr50 <- mti_over_55_tr50 %>% select(participant_id, SCD) %>%
   filter(!participant_id %in% failed_qc)
 scd_status_tr50$SCD <- factor(scd_status_tr50$SCD,
                               levels = c(1,0),
                               labels = c('SCD', 'Control'))
 
-#mtr stats for each tr
+#mtr stats for each TR
 mtr_tr30 <- aseg2mtr %>%
   left_join(., lh_AD_sig2mtr) %>%
   rename(lh_AD_signature = AD_signature) %>%
@@ -260,7 +261,7 @@ mtr_tr30 <- aseg2mtr %>%
   select(!CSF & !ends_with("Ventricle") & !ends_with("Vent")) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 mtr_tr30_table <- tableby(formulize('SCD', names(mtr_tr30)[4:101]),
-                    data = mtr_tr30, numeric.test="wt", total = FALSE)
+                          data = mtr_tr30, numeric.test="wt", total = FALSE)
 summary(mtr_tr30_table, text = T)
 
 mtr_tr50 <- aseg2mtr %>%
@@ -275,3 +276,8 @@ mtr_tr50 <- aseg2mtr %>%
 mtr_tr50_table <- tableby(formulize('SCD', names(mtr_tr50)[4:101]),
                           data = mtr_tr50, numeric.test="wt", total = FALSE)
 summary(mtr_tr50_table, text = T)
+
+# results_tables <- c(aseg_table, thickness_table, FWF_table, NDI_table, ODI_table,
+#                     fa_table, md_table, rd_table, ad_table, kfa_table, mk_table, 
+#                     rk_table, ak_table, mtr_tr30_table, mtr_tr50_table)
+# write2word(results_tables, "results.docx")
