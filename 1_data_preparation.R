@@ -65,6 +65,7 @@ mti_over_55 = mti_participants %>% filter(age > 55) %>%
   filter(participant_id != "sub-CC410129") #error in scanning protocol, mti TR=34ms bl TR=30ms
 mti_over_55[mti_over_55$participant_id=="sub-CC610050", "mt_tr"] <- 30 #from json
 mti_over_55[mti_over_55$participant_id=="sub-CC620821", "mt_tr"] <- 50 #from json
+write_tsv(mti_over_55, "mti_over_55.tsv")
 #separate by TR
 mti_over_55_tr50 <- mti_over_55 %>% filter(mt_tr == 50)
 scd_tr30 <- mti_over_55_tr30 %>% filter(SCD == T)
