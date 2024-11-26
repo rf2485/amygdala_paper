@@ -74,10 +74,10 @@ if [ ! -f $freesurferdir/$j/stats/jhu_volume.stats ]; then
 	cd $freesurferdir/$j
 	mri_easyreg --ref $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/norm.mgz --flo mri/norm.mgz --ref_seg $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/aparc+aseg.mgz --flo_seg mri/aparc+aseg.mgz --bak_field mri/mni2fs_field.mgz --threads 4
 	mri_easywarp --i $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz --o mri/jhu2fs.mgz --field mri/mni2fs_field.mgz --nearest --threads 4
-	mri_binarize --i aparc+aseg.mgz --match 2 7 41 46 251 252 253 254 255 --o wm_mask.mgz
+	mri_binarize --i mri/aparc+aseg.mgz --match 2 7 41 46 251 252 253 254 255 --o mri/wm_mask.mgz
 	mri_mask mri/jhu2fs.mgz mri/wm_mask.mgz mri/jhu2fs.mgz
 	cd $freesurferdir/$j/
-	mri_segstats --seg mri/jhu2fs.mgz --pv mri/norm.mgz --mask mri/jhu2fs.mgz --excludeid 0 --in mri/norm.mgz --sum stats/jhu_volume.stats
+	mri_segstats --seg mri/jhu2fs.mgz --pv mri/norm.mgz --mask mri/jhu2fs.mgz --excludeid 0 --in mri/norm.mgz --sum stats/jhu_volume.stats --ctab $projectdir/JHU_LUT.txt
 fi
 
 #diffusion preproc step 1
@@ -313,7 +313,7 @@ if [ ! -f $freesurferdir/$j/stats/jhu2smi_matlab_p2.stats ]; then
 	cd $freesurferdir/$j/
 	diff_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk dti_ad dti_fa dti_md dti_rd smi_matlab_f smi_matlab_Da smi_matlab_DePar smi_matlab_DePerp smi_matlab_p2 )
 	for meas in "${diff_list[@]}"; do
-		mri_segstats --seg diffusion/jhu2diff_NODDI_mask.mgz --mask diffusion/jhu2diff_NODDI_mask.mgz --i diffusion/$meas.nii --sum stats/jhu2${meas}.stats --excludeid 0
+		mri_segstats --seg diffusion/jhu2diff_NODDI_mask.mgz --mask diffusion/jhu2diff_NODDI_mask.mgz --i diffusion/$meas.nii --sum stats/jhu2${meas}.stats --excludeid 0 --ctab $projectdir/JHU_LUT.txt
 	done
 fi
 
@@ -359,7 +359,7 @@ if [ ! -f $freesurferdir/$j/stats/jhu2mtr.stats ] && [ -f ${rawmti}_mti_bl.nii.g
 	mri_binarize --i aparc+aseg2mtr.mgz --match 2 7 41 46 251 252 253 254 255 --o wm_mask2mtr.mgz
 	mri_mask jhu2mtr.mgz wm_mask2mtr.mgz jhu2mtr.mgz
 	cd $freesurferdir/$j/
-	mri_segstats --seg mti/jhu2mtr.mgz --mask mti/jhu2mtr.mgz --i mti/mtr.nii.gz --sum stats/jhu2mtr.stats --exludeid 0
+	mri_segstats --seg mti/jhu2mtr.mgz --mask mti/jhu2mtr.mgz --i mti/mtr.nii.gz --sum stats/jhu2mtr.stats --excludeid 0 --ctab $projectdir/JHU_LUT.txt
 fi
 
 #G ratio (WM only)
@@ -375,6 +375,6 @@ fi
 ##JHU g-ratio
 if [ ! -f $freesurferdir/$j/stats/jhu2g_ratio.stats ] && [ -f ${rawmti}_mti_bl.nii.gz ]; then
 	cd $freesurferdir/$j
-	mri_segstats --seg diffusion/jhu2diff_NODDI_mask.mgz --mask diffusion/jhu2diff_NODDI_mask.mgz --i diffusion/g_ratio.nii --sum stats/jhu2g_ratio.stats --excludeid 0
+	mri_segstats --seg diffusion/jhu2diff_NODDI_mask.mgz --mask diffusion/jhu2diff_NODDI_mask.mgz --i diffusion/g_ratio.nii --sum stats/jhu2g_ratio.stats --excludeid 0 --ctab $projectdir/JHU_LUT.txt
 fi
 
