@@ -1,6 +1,6 @@
 # basedir=/gpfs/data/lazarlab/CamCan995/
 basedir=/Volumes/Research/lazarm03lab/labspace/AD/camcan995/
-projectdir=$basedir/derivatives/scd/gm_roi/
+projectdir=$basedir/derivatives/scd/main/
 t1dir=$projectdir/freesurfer/
 dwidir=$projectdir/dwi_processed/
 
@@ -38,7 +38,7 @@ if [ ! -f $t1dir/group_qc/recon/index.html ]; then
 fi
 
 #generate QC webpage for JHU in T1 subject space
-if [ ! $t1dir/group_qc/jhu2fs/index.html ]; then
+if [ ! -f $t1dir/group_qc/jhu2fs/index.html ]; then
 	mkdir -p $t1dir/group_qc/jhu2fs
 	echo '<HTML><TITLE>jhu2fs</TITLE><BODY BGCOLOR="#aaaaff">' > $t1dir/group_qc/jhu2fs/index.html
 	for subj in "${subj_list[@]}"; do
