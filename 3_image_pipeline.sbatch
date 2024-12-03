@@ -70,15 +70,15 @@ if [ ! -f $freesurferdir/$j/stats/rh.AD_sig_thickness.stats ]; then
 	rm -rf *h_AD_sig
 fi
 ##JHU volumes
-if [ ! -f $freesurferdir/$j/stats/jhu_volume.stats ]; then
-	cd $freesurferdir/$j
-	mri_easyreg --ref $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/norm.mgz --flo mri/norm.mgz --ref_seg $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/aparc+aseg.mgz --flo_seg mri/aparc+aseg.mgz --bak_field mri/mni2fs_field.mgz --threads 4
-	mri_easywarp --i $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz --o mri/jhu2fs.mgz --field mri/mni2fs_field.mgz --nearest --threads 4
-	mri_binarize --i mri/aparc+aseg.mgz --match 2 7 41 46 251 252 253 254 255 --o mri/wm_mask.mgz
-	mri_mask mri/jhu2fs.mgz mri/wm_mask.mgz mri/jhu2fs.mgz
-	cd $freesurferdir/$j/
-	mri_segstats --seg $freesurferdir/$j/mri/jhu2fs.mgz --pv $freesurferdir/$j/mri/norm.mgz --mask $freesurferdir/$j/mri/jhu2fs.mgz --excludeid 0 --in $freesurferdir/$j/mri/norm.mgz --sum $freesurferdir/$j/stats/jhu_volume.stats
-fi
+# if [ ! -f $freesurferdir/$j/stats/jhu_volume.stats ]; then
+# 	cd $freesurferdir/$j
+# 	mri_easyreg --ref $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/norm.mgz --flo mri/norm.mgz --ref_seg $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/aparc+aseg.mgz --flo_seg mri/aparc+aseg.mgz --bak_field mri/mni2fs_field.mgz --threads 4
+# 	mri_easywarp --i $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz --o mri/jhu2fs.mgz --field mri/mni2fs_field.mgz --nearest --threads 4
+# 	mri_binarize --i mri/aparc+aseg.mgz --match 2 7 41 46 251 252 253 254 255 --o mri/wm_mask.mgz
+# 	mri_mask mri/jhu2fs.mgz mri/wm_mask.mgz mri/jhu2fs.mgz
+# 	cd $freesurferdir/$j/
+# 	mri_segstats --seg $freesurferdir/$j/mri/jhu2fs.mgz --pv $freesurferdir/$j/mri/norm.mgz --mask $freesurferdir/$j/mri/jhu2fs.mgz --excludeid 0 --in $freesurferdir/$j/mri/norm.mgz --sum $freesurferdir/$j/stats/jhu_volume.stats
+# fi
 
 #diffusion preproc step 1
 if [ ! -f $designerdir/residual.nii ]; then
@@ -377,4 +377,7 @@ if [ ! -f $freesurferdir/$j/stats/jhu2g_ratio.stats ] && [ -f ${rawmti}_mti_bl.n
 	cd $freesurferdir/$j
 	mri_segstats --seg diffusion/jhu2diff_NODDI_mask.mgz --mask diffusion/jhu2diff_NODDI_mask.mgz --i diffusion/g_ratio.nii --sum stats/jhu2g_ratio.stats --excludeid 0
 fi
+
+
+
 
