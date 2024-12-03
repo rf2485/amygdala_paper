@@ -1102,23 +1102,135 @@ g_ratio_tr30 <- aseg2g_ratio %>%
   select(!starts_with("Seg00")) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 g_ratio_tr30[g_ratio_tr30 == 0] <- NA
+g_ratio_tr30$SCD <- factor(g_ratio_tr30$SCD,
+                         levels = c('SCD', 'Control'),
+                         labels = c('SCD', 'Control'))
 g_ratio_tr30_table <- tableby(formulize('SCD', names(g_ratio_tr30)[3:56]),
-                          data = g_ratio_tr30, numeric.test="wt", total = FALSE)
+                          data = g_ratio_tr30, numeric.test="wt", total = FALSE
+                          )
 summary(g_ratio_tr30_table, text = T)
-
 
 mtr_tr50 <- aseg2mtr %>%
   left_join(., lh_AD_sig2mtr) %>%
   rename(lh_AD_signature = AD_signature) %>%
   left_join(., rh_AD_sig2mtr) %>%
   rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
+  left_join(., jhu2mtr) %>%
+  rename(participant_id = Measure.mean,
+         middle_cerebellar_peduncle=Seg0001,
+         genu_corpus_callosum=Seg0003,
+         body_corpus_callosum=Seg0004,
+         splenium_corpus_callosum=Seg0005,
+         fornix_column_body=Seg0006,
+         inferior_cerebellar_peduncle_R=Seg0011,
+         inferior_cerebellar_peduncle_L=Seg0012,
+         superior_cerebellar_peduncle_R=Seg0013,
+         superior_cerebellar_peduncle_L=Seg0014,
+         cerebral_peduncle_R=Seg0015,
+         cerebral_peduncle_L=Seg0016,
+         anterior_limb_internal_capsule_R=Seg0017,
+         anterior_limb_internal_capsule_L=Seg0018,
+         posterior_limb_internal_capsule_R=Seg0019,
+         posterior_limb_internal_capsule_L=Seg0020,
+         retrolenticular_part_internal_capsule_R=Seg0021,
+         retrolenticular_part_internal_capsule_L=Seg0022,
+         anterior_corona_radiata_R=Seg0023,
+         anterior_corona_radiata_L=Seg0024,
+         superior_corona_radiata_R=Seg0025,
+         superior_corona_radiata_L=Seg0026,
+         posterior_corona_radiata_R=Seg0027,
+         posterior_corona_radiata_L=Seg0028,
+         posterior_thalamic_radiation_R=Seg0029,
+         posterior_thalamic_radiation_L=Seg0030,
+         sagittal_stratum_R=Seg0031,
+         sagittal_stratum_L=Seg0032,
+         external_capsule_R=Seg0033,
+         external_capsule_L=Seg0034,
+         upper_cingulum_R=Seg0035,
+         upper_cingulum_L=Seg0036,
+         lower_cingulum_R=Seg0037,
+         lower_cingulum_L=Seg0038,
+         fornix_cres_R=Seg0039,
+         fornix_cres_L=Seg0040,
+         superior_longitudinal_fasciculus_R=Seg0041,
+         superior_longitudinal_fasciculus_L=Seg0042,
+         superior_fronto_occipital_fasciculus_R=Seg0043,
+         superior_fronto_occipital_fasciculus_L=Seg0044,
+         inferior_fronto_occipital_fasciculus_R=Seg0045,
+         inferior_fronto_occipital_fasciculus_L=Seg0046,
+         uncinate_fasciculus_R=Seg0047,
+         uncinate_fasciculus_L=Seg0048,
+         tapetum_R=Seg0049,
+         tapetum_L=Seg0050
+  ) %>%
   left_join(scd_status_tr50, .) %>%
-  select(!CSF & !ends_with("Ventricle") & !ends_with("Vent")) %>%
+  select(!CSF & !ends_with("Ventricle") & !ends_with("Vent") & !starts_with("Seg00")) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-mtr_tr50_table <- tableby(formulize('SCD', names(mtr_tr50)[4:101]),
+mtr_tr50[mtr_tr50 == 0] <- NA
+mtr_tr50_table <- tableby(formulize('SCD', names(mtr_tr50)[3:145]),
                           data = mtr_tr50, numeric.test="wt", total = FALSE)
 summary(mtr_tr50_table, text = T)
+
+g_ratio_tr50 <- aseg2g_ratio %>%
+  left_join(., jhu2g_ratio) %>%
+  rename(participant_id = Measure.mean,
+         middle_cerebellar_peduncle=Seg0001,
+         genu_corpus_callosum=Seg0003,
+         body_corpus_callosum=Seg0004,
+         splenium_corpus_callosum=Seg0005,
+         fornix_column_body=Seg0006,
+         inferior_cerebellar_peduncle_R=Seg0011,
+         inferior_cerebellar_peduncle_L=Seg0012,
+         superior_cerebellar_peduncle_R=Seg0013,
+         superior_cerebellar_peduncle_L=Seg0014,
+         cerebral_peduncle_R=Seg0015,
+         cerebral_peduncle_L=Seg0016,
+         anterior_limb_internal_capsule_R=Seg0017,
+         anterior_limb_internal_capsule_L=Seg0018,
+         posterior_limb_internal_capsule_R=Seg0019,
+         posterior_limb_internal_capsule_L=Seg0020,
+         retrolenticular_part_internal_capsule_R=Seg0021,
+         retrolenticular_part_internal_capsule_L=Seg0022,
+         anterior_corona_radiata_R=Seg0023,
+         anterior_corona_radiata_L=Seg0024,
+         superior_corona_radiata_R=Seg0025,
+         superior_corona_radiata_L=Seg0026,
+         posterior_corona_radiata_R=Seg0027,
+         posterior_corona_radiata_L=Seg0028,
+         posterior_thalamic_radiation_R=Seg0029,
+         posterior_thalamic_radiation_L=Seg0030,
+         sagittal_stratum_R=Seg0031,
+         sagittal_stratum_L=Seg0032,
+         external_capsule_R=Seg0033,
+         external_capsule_L=Seg0034,
+         upper_cingulum_R=Seg0035,
+         upper_cingulum_L=Seg0036,
+         lower_cingulum_R=Seg0037,
+         lower_cingulum_L=Seg0038,
+         fornix_cres_R=Seg0039,
+         fornix_cres_L=Seg0040,
+         superior_longitudinal_fasciculus_R=Seg0041,
+         superior_longitudinal_fasciculus_L=Seg0042,
+         superior_fronto_occipital_fasciculus_R=Seg0043,
+         superior_fronto_occipital_fasciculus_L=Seg0044,
+         inferior_fronto_occipital_fasciculus_R=Seg0045,
+         inferior_fronto_occipital_fasciculus_L=Seg0046,
+         uncinate_fasciculus_R=Seg0047,
+         uncinate_fasciculus_L=Seg0048,
+         tapetum_R=Seg0049,
+         tapetum_L=Seg0050
+  ) %>%
+  left_join(scd_status_tr50, .) %>%
+  select(!starts_with("Seg00")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+g_ratio_tr50[g_ratio_tr50 == 0] <- NA
+g_ratio_tr50$SCD <- factor(g_ratio_tr50$SCD,
+                           levels = c('SCD', 'Control'),
+                           labels = c('SCD', 'Control'))
+g_ratio_tr50_table <- tableby(formulize('SCD', names(g_ratio_tr50)[3:56]),
+                              data = g_ratio_tr50, numeric.test="kwt", total = FALSE
+)
+summary(g_ratio_tr50_table, text = T)
 
 # results_tables <- c(aseg_table, thickness_table, FWF_table, NDI_table, ODI_table,
 #                     fa_table, md_table, rd_table, ad_table, kfa_table, mk_table, 
