@@ -1,5 +1,6 @@
 source("1_data_preparation.R")
 library(arsenal)
+library(janitor)
 
 failed_qc <- c('sub-CC510255', #abnormality in left temporal pole
                'sub-CC510438', #abnormality in left frontal lobe
@@ -100,7 +101,7 @@ jhu_volume <- read_tsv("freesurfer/jhu_volume.tsv") %>%
          tapetum_L=Seg0050
          ) %>%
   select(!starts_with("Seg00"))
-# jhu_volume[jhu_volume == 0] <- NA
+jhu_volume[jhu_volume == 0] <- NA
 volumes <- left_join(scd_status, jhu_volume) %>% #join JHU volumes with SCD status
   left_join(., aseg) %>%
   mutate(across(c(3:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
@@ -1043,7 +1044,7 @@ mtr_tr30 <- aseg2mtr %>%
   ) %>%
   left_join(scd_status_tr30, .) %>%
   select(!CSF & !ends_with("Ventricle") & !ends_with("Vent") & !starts_with("Seg00")) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA) 
 mtr_tr30[mtr_tr30 == 0] <- NA
 mtr_tr30_table <- tableby(formulize('SCD', names(mtr_tr30)[3:145]),
                           data = mtr_tr30, numeric.test="wt", total = FALSE)
@@ -1056,7 +1057,6 @@ g_ratio_tr30 <- aseg2g_ratio %>%
          genu_corpus_callosum=Seg0003,
          body_corpus_callosum=Seg0004,
          splenium_corpus_callosum=Seg0005,
-         fornix_column_body=Seg0006,
          inferior_cerebellar_peduncle_R=Seg0011,
          inferior_cerebellar_peduncle_L=Seg0012,
          superior_cerebellar_peduncle_R=Seg0013,
@@ -1095,18 +1095,17 @@ g_ratio_tr30 <- aseg2g_ratio %>%
          inferior_fronto_occipital_fasciculus_L=Seg0046,
          uncinate_fasciculus_R=Seg0047,
          uncinate_fasciculus_L=Seg0048,
-         tapetum_R=Seg0049,
-         tapetum_L=Seg0050
+         tapetum_R=Seg0049
   ) %>%
   left_join(scd_status_tr30, .) %>%
   select(!starts_with("Seg00")) %>%
   mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-g_ratio_tr30[g_ratio_tr30 == 0] <- NA
-g_ratio_tr30$SCD <- factor(g_ratio_tr30$SCD,
-                         levels = c('SCD', 'Control'),
-                         labels = c('SCD', 'Control'))
-g_ratio_tr30_table <- tableby(formulize('SCD', names(g_ratio_tr30)[3:56]),
-                          data = g_ratio_tr30, numeric.test="wt", total = FALSE
+# wm_volume_tr30 <- left_join(scd_status_tr30, volumes) %>%
+#   select(colnames(g_ratio_tr30))
+# g_ratio_tr30[is.na(wm_volume_tr30)] <- NA
+# g_ratio_tr30 <- remove_empty(g_ratio_tr30, which = "cols")
+g_ratio_tr30_table <- tableby(formulize('SCD', names(g_ratio_tr30)[3:ncol(g_ratio_tr30)]),
+                          data = g_ratio_tr30, numeric.test="kwt", total = FALSE
                           )
 summary(g_ratio_tr30_table, text = T)
 
@@ -1232,7 +1231,18 @@ g_ratio_tr50_table <- tableby(formulize('SCD', names(g_ratio_tr50)[3:56]),
 )
 summary(g_ratio_tr50_table, text = T)
 
-# results_tables <- c(aseg_table, thickness_table, FWF_table, NDI_table, ODI_table,
-#                     fa_table, md_table, rd_table, ad_table, kfa_table, mk_table, 
-#                     rk_table, ak_table, mtr_tr30_table, mtr_tr50_table)
-# write2word(results_tables, "results.docx")
+mtr_wm <- read_tsv("freesurfer/mtr_wm.tsv") %>%
+  rename(participant_id=`Measure:mean`, mtr_wm=Seg0001)
+mtr_gm <- read_tsv("freesurfer/mtr_gm.tsv") %>%
+  rename(participant_id=`Measure:mean`, mtr_gm=Seg0001)
+mtr_wm_gm_ratio <- mti_over_55 %>%
+  select(participant_id, coil, mt_tr) %>%
+  left_join(., mtr_wm) %>%
+  left_join(., mtr_gm)
+mtr_wm_gm_ratio$mtr_wm_gm_ratio <- mtr_wm_gm_ratio$mtr_wm / mtr_wm_gm_ratio$mtr_gm
+mtr_wm_gm_ratio$coil <- as.factor(mtr_wm_gm_ratio$coil)
+mtr_wm_gm_ratio$mt_tr <- as.factor(mtr_wm_gm_ratio$mt_tr)
+mtr_wm_gm_ratio_table <- tableby(mt_tr ~ mtr_wm_gm_ratio,
+                                 data = mtr_wm_gm_ratio, numeric.test="kwt", total = F)
+summary(mtr_wm_gm_ratio_table, text = T)
+
