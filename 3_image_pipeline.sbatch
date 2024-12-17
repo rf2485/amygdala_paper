@@ -276,14 +276,12 @@ if [ ! -f $freesurferdir/$j/diffusion/lh_diff_AD_sig_NODDI_mask.mgz ]; then
 		mri_mask diffusion/${s}_diff_AD_sig_FWF_mask.mgz $designerdir/ODI_mask.nii.gz diffusion/${s}_diff_AD_sig_NODDI_mask.mgz
 	done  	
 fi
-if [ ! -f $freesurferdir/$j/diffusion/jhu2diff_NODDI_mask.mgz ]; then
-	## use mni2diff field to generate jhu2diff, then apply NODDI and wm masks
+if [ ! -f $freesurferdir/$j/diffusion/jhu2diff_wm_mask.mgz ]; then
+	## use mni2diff field to generate jhu2diff, then apply wm masks
 	cd $freesurferdir/$j/diffusion
 	mri_easywarp --i $FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz --o jhu2diff.mgz --field mni2diff_field.mgz --nearest --threads 4
-	mri_mask jhu2diff.mgz $designerdir/FWF_mask.nii.gz jhu2diff_FWF_mask.mgz
-	mri_mask jhu2diff_FWF_mask.mgz $designerdir/ODI_mask.nii.gz jhu2diff_NODDI_mask.mgz
-	mri_binarize --i aparc+aseg2diff_NODDI_mask.mgz --match 2 7 41 46 251 252 253 254 255 --o wm_mask2diff.mgz
-	mri_mask jhu2diff_NODDI_mask.mgz wm_mask2diff.mgz jhu2diff_NODDI_mask.mgz
+	mri_binarize --i aparc+aseg2diff.mgz --match 2 7 41 46 251 252 253 254 255 --o wm_mask2diff.mgz
+	mri_mask jhu2diff.mgz wm_mask2diff.mgz jhu2diff_wm_mask.mgz
 fi	
 if [ ! -f $freesurferdir/$j/diffusion/smi_matlab_p2.nii.gz ]; then
 	## copy diffusion metrics to freesurferdir
@@ -305,7 +303,7 @@ if [ ! -f $freesurferdir/$j/stats/jhu2smi_matlab_p2.stats ]; then
 	for meas in "${pyd_list[@]}"; do
 		### generate stats
 		mri_segstats --seg diffusion/aparc+aseg2diff_NODDI_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/aparc+aseg2${meas}.stats --excludeid 0 30 31 62 63 72 77 78 79 80 81 82 85
-		mri_segstats --seg diffusion/jhu2diff_NODDI_mask.mgz --mask diffusion/jhu2diff_NODDI_mask.mgz --i diffusion/$meas.nii.gz --sum stats/jhu2${meas}.stats --excludeid 0
+		mri_segstats --seg diffusion/jhu2diff_wm_mask.mgz --mask diffusion/jhu2diff_wm_mask.mgz --i diffusion/$meas.nii.gz --sum stats/jhu2${meas}.stats --excludeid 0
 		side=( rh lh )
 		for s in "${side[@]}"; do
 			mri_segstats --seg diffusion/${s}_diff_AD_sig_NODDI_mask.mgz --mask diffusion/${s}_diff_AD_sig_NODDI_mask.mgz --excludeid 0 --ctab $projectdir/${s}_AD_signature_LUT.txt --i diffusion/${meas}.nii.gz --sum stats/${s}_AD_sig2${meas}.stats
@@ -323,8 +321,8 @@ if [ ! -f $freesurferdir/$j/stats/jhu2smi_matlab_p2.stats ]; then
 	smi_list=( smi_matlab_f smi_matlab_Da smi_matlab_DePar smi_matlab_DePerp smi_matlab_p2 )
 	for meas in "${smi_list[@]}"; do
 		### repeat for SMI (WM only)
-		mri_segstats --seg diffusion/aparc+aseg2diff_NODDI_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/aparc+aseg2${meas}.stats --id 2 7 41 46 251 252 253 254 255
-		mri_segstats --seg diffusion/jhu2diff_NODDI_mask.mgz --mask diffusion/jhu2diff_NODDI_mask.mgz --i diffusion/$meas.nii.gz --sum stats/jhu2${meas}.stats --excludeid 0
+		mri_segstats --seg diffusion/aparc+aseg2diff.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/aparc+aseg2${meas}.stats --id 2 7 41 46 251 252 253 254 255
+		mri_segstats --seg diffusion/jhu2diff_wm_mask.mgz --mask diffusion/jhu2diff_wm_mask.mgz --i diffusion/$meas.nii.gz --sum stats/jhu2${meas}.stats --excludeid 0
 	done
 fi
 
@@ -423,8 +421,8 @@ fi
 if [ ! -f $freesurferdir/$j/stats/jhu2g_ratio.stats ] && [ -f ${rawmti}_mti_bl.nii.gz ]; then
 	## apply registered aparc+aseg and JHU to g-ratio to generate stats
 	cd $freesurferdir/$j
-	mri_segstats --seg diffusion/aparc+aseg2diff_NODDI_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/g_ratio.nii.gz --sum stats/aparc+aseg2g_ratio.stats --id 2 7 41 46 251 252 253 254 255
-	mri_segstats --seg diffusion/jhu2diff_NODDI_mask.mgz --mask diffusion/jhu2diff_NODDI_mask.mgz --i diffusion/g_ratio.nii.gz --sum stats/jhu2g_ratio.stats --excludeid 0
+	mri_segstats --seg diffusion/aparc+aseg2diff.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/g_ratio.nii.gz --sum stats/aparc+aseg2g_ratio.stats --id 2 7 41 46 251 252 253 254 255
+	mri_segstats --seg diffusion/jhu2diff_wm_mask.mgz --mask diffusion/jhu2diff_wm_mask.mgz --i diffusion/g_ratio.nii.gz --sum stats/jhu2g_ratio.stats --excludeid 0
 fi
 
 
