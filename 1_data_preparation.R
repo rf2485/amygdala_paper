@@ -77,3 +77,8 @@ scd_tr30 <- mti_over_55_tr30 %>% filter(SCD == T)
 write_tsv(scd_tr30, "mti_over_55_tr30_scd.tsv")
 ctl_tr30 <- mti_over_55_tr30 %>% filter(SCD == F)
 write_tsv(ctl_tr30, "mti_over_55_tr30_ctl.tsv")
+
+
+#dwi and mti participants
+dwi_mti_over_55 <- full_join(dwi_over_55, mti_over_55)
+write_tsv(dwi_mti_over_55, "dwi_mti_over_55.tsv")

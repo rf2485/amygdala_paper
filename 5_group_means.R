@@ -1,19 +1,19 @@
 source("1_data_preparation.R")
 library(gtsummary)
 
-failed_qc <- c('sub-CC510255', #abnormality in left temporal pole
-               'sub-CC510438', #abnormality in left frontal lobe
+failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
+               'sub-CC510438', #CTL abnormality in left frontal lobe
                # 'sub-CC610308', #parietal lobe cutoff
                # 'sub-CC610469', #parietal lobe cutoff
                # 'sub-CC620466', #parietal lobe cutoff
-               'sub-CC620821', #segmentation errors from large ventricles
-               'sub-CC621011', #segmentation errors from large ventricles
-               'sub-CC621080', #segmentation errors
+               'sub-CC620821', #SCD segmentation errors from large ventricles
+               'sub-CC621011', #CTL segmentation errors from large ventricles
+               'sub-CC621080', #SCD segmentation errors
                # 'sub-CC710214', #parietal lobe cutoff
-               'sub-CC710551', #motion artifacts in DWI
-               'sub-CC711027', #severe motion artifacts in T1
+               'sub-CC710551', #CTL motion artifacts in DWI
+               'sub-CC711027', #SCD severe motion artifacts in T1
                # 'sub-CC712027', #parietal lobe cutoff
-               'sub-CC721434' #segmentation errors from large ventricles
+               'sub-CC721434' #CTL segmentation errors from large ventricles
 )
 
 subcort_gm <- c("SCD", "Left.Thalamus", "Right.Thalamus", "Left.Caudate", "Right.Caudate",
@@ -119,7 +119,9 @@ volumes <- left_join(scd_status, jhu_volume) %>% #join JHU volumes with SCD stat
 subcort_gm_volumes_table <- volumes %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -131,7 +133,9 @@ wm_volumes_table <- volumes %>%
            inferior_cerebellar_peduncle_R:tapetum_L, 
            CC_Posterior:CC_Anterior)) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -163,7 +167,9 @@ thickness <- left_join(scd_status, lh_aparc_thickness) %>% #join left cortical t
 ctx_gm_thickness_table <- thickness %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -209,7 +215,9 @@ fit_FWF <- aseg2fit_FWF %>%
 subcort_gm_FWF_table <- fit_FWF %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -219,7 +227,9 @@ subcort_gm_FWF_table <- fit_FWF %>%
 ctx_gm_FWF_table <- fit_FWF %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -238,7 +248,9 @@ fit_NDI <- aseg2fit_NDI %>%
 subcort_gm_NDI_table <- fit_NDI %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -248,7 +260,9 @@ subcort_gm_NDI_table <- fit_NDI %>%
 ctx_gm_NDI_table <- fit_NDI %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -267,7 +281,9 @@ fit_ODI <- aseg2fit_ODI %>%
 subcort_gm_ODI_table <- fit_ODI %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -277,7 +293,9 @@ subcort_gm_ODI_table <- fit_ODI %>%
 ctx_gm_ODI_table <- fit_ODI %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -297,7 +315,9 @@ dti_fa <- aseg2dti_fa %>%
 subcort_gm_fa_table <- dti_fa %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -307,7 +327,9 @@ subcort_gm_fa_table <- dti_fa %>%
 ctx_gm_fa_table <- dti_fa %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -319,7 +341,9 @@ wm_fa_table <- dti_fa %>%
            fornix_column_body:tapetum_L
            )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -339,7 +363,9 @@ dti_md <- aseg2dti_md %>%
 subcort_gm_md_table <- dti_md %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -349,7 +375,9 @@ subcort_gm_md_table <- dti_md %>%
 ctx_gm_md_table <- dti_md %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -361,7 +389,9 @@ wm_md_table <- dti_md %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -381,7 +411,9 @@ dti_rd <- aseg2dti_rd %>%
 subcort_gm_rd_table <- dti_rd %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -391,7 +423,9 @@ subcort_gm_rd_table <- dti_rd %>%
 ctx_gm_rd_table <- dti_rd %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -403,7 +437,9 @@ wm_rd_table <- dti_rd %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -423,7 +459,9 @@ dti_ad <- aseg2dti_ad %>%
 subcort_gm_ad_table <- dti_ad %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -433,7 +471,9 @@ subcort_gm_ad_table <- dti_ad %>%
 ctx_gm_ad_table <- dti_ad %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -465,7 +505,9 @@ dki_kfa <- aseg2dki_kfa %>%
 subcort_gm_kfa_table <- dki_kfa %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -475,7 +517,9 @@ subcort_gm_kfa_table <- dki_kfa %>%
 ctx_gm_kfa_table <- dki_kfa %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -487,7 +531,9 @@ wm_kfa_table <- dki_kfa %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -507,7 +553,9 @@ dki_mk <- aseg2dki_mk %>%
 subcort_gm_mk_table <- dki_mk %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -517,7 +565,9 @@ subcort_gm_mk_table <- dki_mk %>%
 ctx_gm_mk_table <- dki_mk %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -529,7 +579,9 @@ wm_mk_table <- dki_mk %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -549,7 +601,9 @@ dki_rk <- aseg2dki_rk %>%
 subcort_gm_rk_table <- dki_rk %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -559,7 +613,9 @@ subcort_gm_rk_table <- dki_rk %>%
 ctx_gm_rk_table <- dki_rk %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -571,7 +627,9 @@ wm_rk_table <- dki_rk %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -591,7 +649,9 @@ dki_ak <- aseg2dki_ak %>%
 subcort_gm_ak_table <- dki_ak %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -601,7 +661,9 @@ subcort_gm_ak_table <- dki_ak %>%
 ctx_gm_ak_table <- dki_ak %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -613,7 +675,9 @@ wm_ak_table <- dki_ak %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -632,7 +696,9 @@ wm_Da_table <- smi_matlab_Da %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -644,14 +710,16 @@ smi_matlab_DePar <- aseg2smi_matlab_DePar %>%
   left_join(., jhu2smi_matlab_DePar) %>%
   rename(any_of(jhu_lookup)) %>%
   left_join(scd_status, .) %>%
-  select(!starts_with("Seg00")) #%>%
-  # mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+  select(!starts_with("Seg00")) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
 wm_DePar_table <- smi_matlab_DePar %>%
   select(c(SCD, CC_Posterior:CC_Anterior, middle_cerebellar_peduncle,
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -670,7 +738,9 @@ wm_DePerp_table <- smi_matlab_DePerp %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -689,7 +759,9 @@ wm_f_table <- smi_matlab_f %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -708,7 +780,9 @@ wm_p2_table <- smi_matlab_p2 %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -742,7 +816,9 @@ mtr_tr30 <- aseg2mtr %>%
 subcort_gm_mtr_tr30_table <- mtr_tr30 %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -752,7 +828,9 @@ subcort_gm_mtr_tr30_table <- mtr_tr30 %>%
 ctx_gm_mtr_tr30_table <- mtr_tr30 %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -764,7 +842,9 @@ wm_mtr_tr30_table <- mtr_tr30 %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -783,7 +863,9 @@ wm_g_ratio_tr30_table <- g_ratio_tr30 %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -803,7 +885,9 @@ mtr_tr50 <- aseg2mtr %>%
 subcort_gm_mtr_tr50_table <- mtr_tr50 %>% 
   select(any_of(subcort_gm)) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -813,7 +897,9 @@ subcort_gm_mtr_tr50_table <- mtr_tr50 %>%
 ctx_gm_mtr_tr50_table <- mtr_tr50 %>% 
   select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -825,7 +911,9 @@ wm_mtr_tr50_table <- mtr_tr50 %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+              ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -845,7 +933,9 @@ wm_g_ratio_tr50_table <- g_ratio_tr50 %>%
            fornix_column_body:tapetum_L
   )) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              missing_text = "Excluded Outliers") %>%
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
   add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
@@ -863,8 +953,11 @@ mtr_wm_gm_ratio <- mti_over_55 %>%
   left_join(., mtr_gm)
 mtr_wm_gm_ratio$mtr_wm_gm_ratio <- mtr_wm_gm_ratio$mtr_wm / mtr_wm_gm_ratio$mtr_gm
 mtr_wm_gm_ratio$coil <- as.factor(mtr_wm_gm_ratio$coil)
-mtr_wm_gm_ratio$mt_tr <- as.factor(mtr_wm_gm_ratio$mt_tr)
-mtr_wm_gm_ratio %>% select(!participant_id) %>% tbl_summary(by = mt_tr) %>% add_p()
+# mtr_wm_gm_ratio$mt_tr <- as.factor(mtr_wm_gm_ratio$mt_tr)
+mtr_wm_gm_ratio$mt_tr <- factor(mtr_wm_gm_ratio$mt_tr,
+                                levels = c(30, 50),
+                                labels = c("TR=30ms", "TR=50ms"))
+mtr_wm_gm_ratio %>% select(mt_tr, mtr_wm_gm_ratio) %>% tbl_summary(by = mt_tr, missing = "no") %>% add_p()
 
 tbl_merge(list(subcort_gm_volumes_table,
                subcort_gm_fa_table, subcort_gm_md_table, subcort_gm_ad_table, subcort_gm_rd_table,
@@ -907,3 +1000,109 @@ tbl_merge(list(wm_volumes_table,
                           )) %>% 
   as_gt() %>% 
   gt::gtsave(filename = "wm_table.html")
+
+wm_dti_table <- tbl_merge(list(
+  wm_fa_table, wm_md_table
+),
+tab_spanner = c("**FA**", "**MD**")
+)
+
+wm_dki_table <- tbl_merge(list(
+  wm_kfa_table, wm_mk_table
+),
+tab_spanner = c("**KFA**", "**MK**")
+)
+
+wm_smi_table_ax <- tbl_merge(list(
+  wm_Da_table, wm_f_table
+),
+tab_spanner = c("**Axonal Diffusion**", "**Axonal Fraction**")
+)
+
+wm_smi_table_De <- tbl_merge(list(
+  wm_DePar_table, wm_DePerp_table
+),
+tab_spanner = c("**Parallel Extracellular Diffusion**", "**Perpendicular Extracellular Diffusion**")
+)
+
+wm_mti_table <- tbl_merge(list(
+  wm_mtr_tr30_table, wm_mtr_tr50_table
+),
+tab_spanner = c("**MTR TR=30ms**", "**MTR TR=50ms**")
+)
+
+wm_g_ratio_table <- tbl_merge(list(
+  wm_g_ratio_tr30_table, wm_g_ratio_tr50_table
+),
+tab_spanner = c("**g-ratio TR=30ms**", "**g-ratio TR=50ms**")
+)
+
+gm_vol_thick_table <- tbl_merge(list(
+  subcort_gm_volumes_table, ctx_gm_thickness_table
+),
+tab_spanner = c("**Subcortical Volume**", "**Cortical Thickness**")
+)
+
+gm_fa_table <- tbl_stack(list(subcort_gm_fa_table, ctx_gm_fa_table))
+gm_md_table <- tbl_stack(list(subcort_gm_md_table, ctx_gm_md_table))
+gm_dti_table <- tbl_merge(list(
+  gm_fa_table, gm_md_table
+),
+tab_spanner = c("**FA**", "**MD**")
+)
+
+subcort_gm_dki_table <- tbl_merge(list(
+  subcort_gm_kfa_table, subcort_gm_mk_table
+),
+tab_spanner = c("**KFA**", "**MK**")
+)
+
+ctx_gm_dki_table <- tbl_merge(list(
+  ctx_gm_kfa_table, ctx_gm_mk_table
+),
+tab_spanner = c("**KFA**", "**MK**")
+)
+
+gm_FWF_table <- tbl_stack(list(subcort_gm_FWF_table, ctx_gm_FWF_table))
+gm_NDI_table <- tbl_stack(list(subcort_gm_NDI_table, ctx_gm_NDI_table))
+gm_ODI_table <- tbl_stack(list(subcort_gm_ODI_table, ctx_gm_ODI_table))
+gm_NDI_ODI_table <- tbl_merge(list(
+  gm_ODI_table, gm_NDI_table
+),
+tab_spanner = c("**ODI**", "**NDI**")
+)
+
+gm_mtr_tr30_table <- tbl_stack(list(subcort_gm_mtr_tr30_table, ctx_gm_mtr_tr30_table))
+gm_mtr_tr50_table <- tbl_stack(list(subcort_gm_mtr_tr50_table, ctx_gm_mtr_tr50_table))
+gm_mtr_table <- tbl_merge(list(
+  gm_mtr_tr50_table, gm_mtr_tr30_table
+),
+tab_spanner = c("**MTR TR=50ms**", "**MTR TR=30ms**")
+)
+
+library(ggpmisc)
+amygdala_df <- dki_kfa %>% select(participant_id, SCD, Left.Amygdala, Right.Amygdala) %>%
+  rename(kfa_lh_amygdala = Left.Amygdala, kfa_rh_amygdala = Right.Amygdala)
+amygdala_df <- fit_ODI %>% select(participant_id, SCD, Left.Amygdala, Right.Amygdala) %>%
+  rename(odi_lh_amygdala = Left.Amygdala, odi_rh_amygdala = Right.Amygdala) %>%
+  left_join(amygdala_df, .)
+amygdala_df <- dwi_over_55 %>% select(participant_id, homeint_storyrecall_d, 
+                                      bp_dia_mean_cardio, bp_sys_mean_cardio,
+                                      additional_hads_anxiety, additional_hads_depression) %>%
+  left_join(amygdala_df, .)
+
+
+summary(lm(kfa_lh_amygdala ~ homeint_storyrecall_d))
+amygdala_lh_kfa_odi <- lm(kfa_lh_amygdala ~ odi_lh_amygdala, data = amygdala_df)
+summary(amygdala_lh_kfa_odi)
+ggplot(amygdala_df, aes(kfa_lh_amygdala, odi_lh_amygdala)) +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y ~ x) +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
+                    label = paste0(
+                      "p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(amygdala_lh_kfa_odi)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(amygdala_lh_kfa_odi)$coefficients[2,1], 2))), 
+                fill = NA, label.color = NA) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
