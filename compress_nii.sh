@@ -1,15 +1,15 @@
-# basedir=/gpfs/data/lazarlab/CamCan995/
-basedir=/Volumes/Research/lazarm03lab/labspace/AD/camcan995/
+basedir=/gpfs/data/lazarlab/CamCan995/
+# basedir=/Volumes/Research/lazarm03lab/labspace/AD/camcan995/
 projectdir=$basedir/derivatives/scd/main/
 freesurferdir=$projectdir/freesurfer
 
-# export FREESURFER_HOME=/gpfs/share/apps/freesurfer/7.4.1/raw/freesurfer/
-# module load freesurfer/7.4.1
+export FREESURFER_HOME=/gpfs/share/apps/freesurfer/7.4.1/raw/freesurfer/
+module load freesurfer/7.4.1
 export SUBJECTS_DIR=$freesurferdir
-# module load miniconda3/gpu/4.9.2
-# source activate ~/.conda/envs/fsl_eddy/
-# export FSLDIR=$CONDA_PREFIX
-# source $FSLDIR/etc/fslconf/fsl.sh
+module load miniconda3/gpu/4.9.2
+source activate ~/.conda/envs/fsl_eddy/
+export FSLDIR=$CONDA_PREFIX
+source $FSLDIR/etc/fslconf/fsl.sh
 
 subj_list=$(cut -f1 -d$'\t' $projectdir/dwi_over_55.tsv)
 subj_list=($subj_list)

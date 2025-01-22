@@ -13,7 +13,7 @@ t1dir=$projectdir/freesurfer/
 module load freesurfer/7.4.1
 export SUBJECTS_DIR=$t1dir
 
-cut -f1 $projectdir/dwi_over_55.tsv > $t1dir/subjectsfile.txt
+cut -f1 $projectdir/dwi_mti_over_55.tsv > $t1dir/subjectsfile.txt
 cd $t1dir
 sed -i '' '1d' subjectsfile.txt
 

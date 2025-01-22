@@ -12,7 +12,7 @@ export SUBJECTS_DIR=$t1dir
 # export FSLDIR=$CONDA_PREFIX
 # source $FSLDIR/etc/fslconf/fsl.sh
 
-subj_list=$(cut -f1 -d$'\t' $projectdir/dwi_over_55.tsv)
+subj_list=$(cut -f1 -d$'\t' $projectdir/dwi_mti_over_55.tsv)
 subj_list=($subj_list)
 
 #generate QC webpage for freesurfer recon (WM and pial edges)
