@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --time=12:00:00
 #SBATCH --mem=32G
-#SBATCH --array=1-328
+#SBATCH --array=1-326
 #SBATCH -o ./slurm_output/3_image_pipeline/slurm-%A_%a.out
 
 basedir=/gpfs/data/lazarlab/CamCan995/

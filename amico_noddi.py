@@ -2,7 +2,7 @@ import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import amico
 import sys
-study="/gpfs/data/lazarlab/CamCan995/derivatives/scd/gm_roi/dwi_processed/"
+study="/gpfs/data/lazarlab/CamCan995/derivatives/scd/main/dwi_processed/"
 subject=sys.argv[1]
 amico.core.setup()
 ae = amico.Evaluation(study, subject)
