@@ -34,11 +34,12 @@ mkdir -p $freesurferdir
 module load freesurfer/7.4.1
 export SUBJECTS_DIR=$freesurferdir
 module load singularity/3.9.8
+module load matlab/R2024a
 module load miniconda3/gpu/4.9.2
 source activate ~/.conda/envs/fsl_eddy/
 export FSLDIR=$CONDA_PREFIX
 source $FSLDIR/etc/fslconf/fsl.sh
-module load matlab/R2024a
+
 
 #recon-all-clinical to generate segmentations
 if [ ! -f $freesurferdir/$j/mri/wmparc.mgz ] && [ -f ${rawanat}_T1w.nii.gz ]; then
@@ -393,7 +394,7 @@ if [ ! -f $freesurferdir/$j/stats/jhu2mtr.stats ] && [ -f ${rawmti}_mti_bl.nii.g
 	done
 	mri_segstats --seg mti/jhu2mtr.mgz --mask mti/jhu2mtr.mgz --i mti/mtr.nii.gz --sum stats/jhu2mtr.stats --excludeid 0
 fi
-if [ ! -f $freesurferdir/$j/stats/mtr_gm.stats ]; then
+if [ ! -f $freesurferdir/$j/stats/mtr_gm.stats ] && [ -f ${rawmti}_mti_bl.nii.gz ]; then
 	##whole brain WM and GM in MTR (to choose which TR has better contrast)
 	cd $freesurferdir/$j
 	mri_binarize --i mti/aparc+aseg2mtr.mgz --all-wm --o mti/mtr_wm.mgz #all wm
