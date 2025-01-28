@@ -38,8 +38,30 @@ participants$SCD <- participants$homeint_v230
 participants$SCD[participants$SCD == 1] <- FALSE
 participants$SCD[participants$SCD == 2] <- TRUE
 participants$SCD[is.na(participants$SCD)] <- FALSE
+participants$SCD <- factor(participants$SCD,
+                           levels = c(1,0),
+                           labels = c('SCD', 'Control'))
 participants[participants$participant_id=="sub-CC610050", "mt_tr"] <- 30 #from json
 participants[participants$participant_id=="sub-CC620821", "mt_tr"] <- 50 #from json
+participants$mt_tr <- factor(participants$mt_tr,
+                             levels = c(30, 50),
+                             labels = c("TR=30ms", "TR=50ms"))
+participants$Income <- factor(participants$homeint_v15,
+                              levels = c("D", "B", "C", "A", "F", "E"),
+                              labels = c("Less than  £18000", 
+                                         "£18000 to 30999", 
+                                         "£31000 to 51999",
+                                         "£52000 to 100000",
+                                         "Greater than £100000",
+                                         "Prefer not to answer"))
+participants$Ethnicity <- factor(participants$homeint_v24,
+                                 levels = c(1,2,3,4,6),
+                                 labels = c("White", "Mixed", "Asian", "Black", "Other"))
+participants$Sex <- str_to_title(participants$sex)
+participants$age_education_completed <- participants$homeint_v74
+participants <- set_label(participants,
+                          age = "Age (Years)",
+                          age_education_completed = "Age Education Completed (Years)")
 
 #all DWI participants
 #replace with location of your dwi participants.tsv

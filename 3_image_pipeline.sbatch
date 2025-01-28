@@ -226,8 +226,12 @@ fi
 if [ ! -f $designerdir/AMICO/NODDI/fit_FWF.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
 	##fit NODDI model using the AMICO program
 	conda deactivate
-	source activate ~/.conda/envs/amico/
+	source activate ~/.conda/envs/amico/ #switch to amico conda env
 	python3 $projectdir/amico_noddi.py $j
+	conda deactivate
+	source activate ~/.conda/envs/fsl_eddy/ #switch back to FSL eddy conda env
+	export FSLDIR=$CONDA_PREFIX
+	source $FSLDIR/etc/fslconf/fsl.sh
 fi
 if [ ! -f $designerdir/metrics/smi_matlab_p2.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
 	##fit SMI model using matlab
