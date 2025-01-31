@@ -1,5 +1,7 @@
 source("1_data_preparation.R")
 library(gtsummary)
+library(ggeffects)
+library(ggtext)
 
 failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
                'sub-CC510438', #CTL abnormality in left frontal lobe
@@ -93,15 +95,13 @@ remove_outliers <- function(x, na.rm = TRUE)
   y
 }
 
-#extract SCD status from dwi_over_55 table
-scd_status <- dwi_over_55 %>% select(participant_id, SCD) %>%
+#extract SCD status and demographics for participants
+scd_status <- dwi_mti_over_55 %>% select(participant_id, SCD, mt_tr, 
+                                         Income, Ethnicity, Sex, age, age_education_completed) %>%
   filter(!participant_id %in% failed_qc)
-scd_status$SCD <- factor(scd_status$SCD,
-                         levels = c(1,0),
-                         labels = c('SCD', 'Control'))
 
 #import aseg stats table (subcortical volumes)
-aseg = read_tsv("freesurfer/asegtable.tsv") %>%
+aseg <- read_tsv("freesurfer/asegtable.tsv") %>%
   rename(participant_id=`Measure:volume`)
 names(aseg) <- make.names(names(aseg))
 
@@ -109,10 +109,10 @@ names(aseg) <- make.names(names(aseg))
 jhu_volume <- read_tsv("freesurfer/jhu_volume.tsv") %>%
   rename(any_of(jhu_lookup)) %>%
   select(!starts_with("Seg00"))
-volumes <- left_join(scd_status, jhu_volume) %>% #join JHU volumes with SCD status
-  left_join(., aseg) %>%
-  mutate(across(c(3:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
-  mutate(across(where(is.double), remove_outliers)) %>% #remove outliers (change to NA)
+volumes <- left_join(scd_status, aseg) %>% #join volumes with SCD status
+  left_join(., jhu_volume) %>%
+  mutate(across(c(Left.Lateral.Ventricle:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
+  # mutate(across(where(is.double), remove_outliers)) %>% #remove outliers (change to NA)
   rename(Left.Cerebral.White.Matter	= lhCerebralWhiteMatterVol, 
          Right.Cerebral.White.Matter	= rhCerebralWhiteMatterVol) %>%
   select(!c((BrainSegVol:CortexVol), (CerebralWhiteMatterVol:EstimatedTotalIntraCranialVol)))
@@ -129,9 +129,7 @@ subcort_gm_volumes_table <- volumes %>%
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")
 wm_volumes_table <- volumes %>% 
-  select(c(SCD:middle_cerebellar_peduncle, 
-           inferior_cerebellar_peduncle_R:tapetum_L, 
-           CC_Posterior:CC_Anterior)) %>%
+  select(c(SCD, middle_cerebellar_peduncle:tapetum_L)) %>%
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
               missing = "no"
               # missing_text = "Excluded Outliers"
@@ -606,7 +604,7 @@ subcort_gm_rk_table <- dki_rk %>%
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% #filter_p() %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")
@@ -654,7 +652,7 @@ subcort_gm_ak_table <- dki_ak %>%
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% #filter_p() %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")
@@ -1081,18 +1079,20 @@ tab_spanner = c("**MTR TR=50ms**", "**MTR TR=30ms**")
 )
 
 library(ggpmisc)
-amygdala_df <- dki_kfa %>% select(participant_id, SCD, Left.Amygdala, Right.Amygdala) %>%
+amygdala_df <- fit_NDI %>% select(participant_id, SCD, Left.Amygdala, Right.Amygdala) %>%
   rename(kfa_lh_amygdala = Left.Amygdala, kfa_rh_amygdala = Right.Amygdala)
-amygdala_df <- fit_ODI %>% select(participant_id, SCD, Left.Amygdala, Right.Amygdala) %>%
-  rename(odi_lh_amygdala = Left.Amygdala, odi_rh_amygdala = Right.Amygdala) %>%
-  left_join(amygdala_df, .)
 amygdala_df <- dwi_over_55 %>% select(participant_id, homeint_storyrecall_d, 
                                       bp_dia_mean_cardio, bp_sys_mean_cardio,
                                       additional_hads_anxiety, additional_hads_depression) %>%
   left_join(amygdala_df, .)
 
 
-summary(lm(kfa_lh_amygdala ~ homeint_storyrecall_d))
+summary(lm(kfa_rh_amygdala ~ homeint_storyrecall_d, amygdala_df))
+summary(lm(kfa_rh_amygdala ~ additional_hads_anxiety, amygdala_df))
+summary(lm(kfa_rh_amygdala ~ additional_hads_depression, amygdala_df))
+summary(lm(kfa_rh_amygdala ~ bp_sys_mean_cardio, amygdala_df))
+
+
 amygdala_lh_kfa_odi <- lm(kfa_lh_amygdala ~ odi_lh_amygdala, data = amygdala_df)
 summary(amygdala_lh_kfa_odi)
 ggplot(amygdala_df, aes(kfa_lh_amygdala, odi_lh_amygdala)) +

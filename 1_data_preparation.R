@@ -1,4 +1,5 @@
 library(tidyverse)
+library(labelVector)
 #replace with location for your CamCan data
 basedir = "/Volumes/Research/lazarm03lab/labspace/AD/camcan995/"
 data_dir = file.path(basedir, "source_materials")
@@ -72,9 +73,9 @@ dwi_participants = read_tsv(file.path(data_dir, "imaging/dwi/participants.tsv"))
 dwi_over_55 = dwi_participants %>% filter(age > 55)
 write_tsv(dwi_over_55, "dwi_over_55.tsv") #write to file
 ### split dwi_over_55 into SCD and controls ###
-scd_dwi = dwi_over_55 %>% filter(SCD == TRUE)
+scd_dwi = dwi_over_55 %>% filter(SCD == "SCD")
 write_tsv(scd_dwi, "dwi_over_55_scd.tsv")
-ctl_dwi = dwi_over_55 %>% filter(SCD == FALSE)
+ctl_dwi = dwi_over_55 %>% filter(SCD == "Control")
 write_tsv(ctl_dwi, "dwi_over_55_ctl.tsv")
 
 
@@ -89,15 +90,15 @@ mti_over_55 = mti_participants %>% filter(age > 55) %>%
   filter(participant_id != "sub-CC410129") #error in scanning protocol, mti TR=34ms bl TR=30ms
 write_tsv(mti_over_55, "mti_over_55.tsv")
 #separate by TR
-mti_over_55_tr50 <- mti_over_55 %>% filter(mt_tr == 50)
-scd_tr50 <- mti_over_55_tr50 %>% filter(SCD == T)
+mti_over_55_tr50 <- mti_over_55 %>% filter(mt_tr == "TR=50ms")
+scd_tr50 <- mti_over_55_tr50 %>% filter(SCD == "SCD")
 write_tsv(scd_tr50, "mti_over_55_tr50_scd.tsv")
-ctl_tr50 <- mti_over_55_tr50 %>% filter(SCD == F)
+ctl_tr50 <- mti_over_55_tr50 %>% filter(SCD == "Control")
 write_tsv(ctl_tr50, "mti_over_55_tr30_ctl.tsv")
-mti_over_55_tr30 <- mti_over_55 %>% filter(mt_tr == 30)
-scd_tr30 <- mti_over_55_tr30 %>% filter(SCD == T)
+mti_over_55_tr30 <- mti_over_55 %>% filter(mt_tr == "TR=30ms")
+scd_tr30 <- mti_over_55_tr30 %>% filter(SCD == "SCD")
 write_tsv(scd_tr30, "mti_over_55_tr30_scd.tsv")
-ctl_tr30 <- mti_over_55_tr30 %>% filter(SCD == F)
+ctl_tr30 <- mti_over_55_tr30 %>% filter(SCD == "Control")
 write_tsv(ctl_tr30, "mti_over_55_tr30_ctl.tsv")
 
 
