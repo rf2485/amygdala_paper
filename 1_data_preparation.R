@@ -62,7 +62,13 @@ participants$Sex <- str_to_title(participants$sex)
 participants$age_education_completed <- participants$homeint_v74
 participants <- set_label(participants,
                           age = "Age (Years)",
-                          age_education_completed = "Age Education Completed (Years)")
+                          age_education_completed = "Age Education Completed (Years)",
+                          homeint_storyrecall_d = "Delayed Story Recall (Number of details)",
+                          bp_dia_mean_cardio = "Diastolic Blood Pressure (mmHg)",
+                          bp_sys_mean_cardio = "Systolic Blood Pressure (mmHg)",
+                          pulse_mean_cardio = "Pulse (beats/min)",
+                          additional_hads_anxiety = "HADS Anxiety Score",
+                          additional_hads_depression = "HADS Depression Score")
 
 #all DWI participants
 #replace with location of your dwi participants.tsv
@@ -77,7 +83,6 @@ scd_dwi = dwi_over_55 %>% filter(SCD == "SCD")
 write_tsv(scd_dwi, "dwi_over_55_scd.tsv")
 ctl_dwi = dwi_over_55 %>% filter(SCD == "Control")
 write_tsv(ctl_dwi, "dwi_over_55_ctl.tsv")
-
 
 #all MTI participants
 #replace with location of your mti participants.tsv
@@ -100,7 +105,6 @@ scd_tr30 <- mti_over_55_tr30 %>% filter(SCD == "SCD")
 write_tsv(scd_tr30, "mti_over_55_tr30_scd.tsv")
 ctl_tr30 <- mti_over_55_tr30 %>% filter(SCD == "Control")
 write_tsv(ctl_tr30, "mti_over_55_tr30_ctl.tsv")
-
 
 #dwi and mti participants
 dwi_mti_over_55 <- full_join(dwi_over_55, mti_over_55)
