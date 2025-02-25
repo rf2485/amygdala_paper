@@ -1,7 +1,7 @@
 library(tidyverse)
 library(labelVector)
 #replace with location for your CamCan data
-basedir = "/Volumes/Research/lazarm03lab/labspace/AD/camcan995/"
+basedir = "/Volumes/labspace/AD/camcan995/"
 data_dir = file.path(basedir, "source_materials")
 raw_dir = file.path(basedir, "raw")
 
