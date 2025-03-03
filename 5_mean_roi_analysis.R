@@ -1489,7 +1489,7 @@ plot(pr, show_data = T, dot_alpha = 1) +
         legend.title=element_blank())
 
 left_amygdala_KFA_by_story_age_sex_income_education <- 
-  lm(homeint_storyrecall_d ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
+  lm(homeint_storyrecall_d ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
      left_amygdala)
 corr_p_value <- summary(left_amygdala_KFA_by_story_age_sex_income_education)$coefficients[2,4]
 adj_r_squared <- summary(left_amygdala_KFA_by_story_age_sex_income_education)$adj.r.squared
@@ -1516,7 +1516,7 @@ interaction_p <- summary(left_amygdala_KFA_by_anxiety_age_sex_income_education)$
 pr <- predict_response(left_amygdala_KFA_by_anxiety_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Amygdala KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
+    title = "B. Mean Left Amygdala KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** anxiety p < 0.001",
       "anxiety p = ", signif(corr_p_value, 2),
@@ -1554,7 +1554,7 @@ interaction_p <- summary(right_amygdala_KFA_by_story_age_sex_income_education)$c
 pr <- predict_response(right_amygdala_KFA_by_story_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Right Amygdala KFA and Memory, \n Corrected by Age, Sex, Education, and Income",
+    title = "B. Mean Right Amygdala KFA and Memory, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** story p < 0.001",
       "story p = ", signif(corr_p_value, 2),
@@ -1573,7 +1573,7 @@ interaction_p <- summary(right_amygdala_KFA_by_anxiety_age_sex_income_education)
 pr <- predict_response(right_amygdala_KFA_by_anxiety_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Right Amygdala KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
+    title = "C. Mean Right Amygdala KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** anxiety p < 0.001",
       "anxiety p = ", signif(corr_p_value, 2),
@@ -1592,7 +1592,7 @@ interaction_p <- summary(right_amygdala_KFA_by_depression_age_sex_income_educati
 pr <- predict_response(right_amygdala_KFA_by_depression_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Right Amygdala KFA and Depression, \n Corrected by Age, Sex, Education, and Income",
+    title = "B. Mean Right Amygdala KFA and Depression, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** depression p < 0.001",
       "depression p = ", signif(corr_p_value, 2),
@@ -1611,7 +1611,7 @@ interaction_p <- summary(left_accumbens_area_KFA_by_story_age_sex_income_educati
 pr <- predict_response(left_accumbens_area_KFA_by_story_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area KFA and Memory, \n Corrected by Age, Sex, Education, and Income",
+    title = "C. Mean Left Accumbens Area KFA and Memory, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** story p < 0.001",
       "story p = ", signif(corr_p_value, 2),
@@ -1630,7 +1630,7 @@ interaction_p <- summary(left_accumbens_area_KFA_by_anxiety_age_sex_income_educa
 pr <- predict_response(left_accumbens_area_KFA_by_anxiety_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
+    title = "D. Mean Left Accumbens Area KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** anxiety p < 0.001",
       "anxiety p = ", signif(corr_p_value, 2),
@@ -1668,7 +1668,7 @@ interaction_p <- summary(left_accumbens_area_mk_by_story_age_sex_income_educatio
 pr <- predict_response(left_accumbens_area_mk_by_story_age_sex_income_education, c( "dki_mk[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area MK and Memory, \n Corrected by Age, Sex, Education, and Income",
+    title = "D. Mean Left Accumbens Area MK and Memory, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** story p < 0.001",
       "story p = ", signif(corr_p_value, 2),
@@ -1687,7 +1687,7 @@ interaction_p <- summary(left_accumbens_area_mk_by_anxiety_age_sex_income_educat
 pr <- predict_response(left_accumbens_area_mk_by_anxiety_age_sex_income_education, c( "dki_mk[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area MK and Anxiety, \n Corrected by Age, Sex, Education, and Income",
+    title = "E. Mean Left Accumbens Area MK and Anxiety, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** anxiety p < 0.001",
       "anxiety p = ", signif(corr_p_value, 2),
@@ -1706,7 +1706,7 @@ interaction_p <- summary(left_accumbens_area_mk_by_depression_age_sex_income_edu
 pr <- predict_response(left_accumbens_area_mk_by_depression_age_sex_income_education, c( "dki_mk[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area MK and Depression, \n Corrected by Age, Sex, Education, and Income",
+    title = "C. Mean Left Accumbens Area MK and Depression, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** depression p < 0.001",
       "depression p = ", signif(corr_p_value, 2),
@@ -2097,6 +2097,8 @@ plot(pr, show_data = T, dot_alpha = 1) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5),
         legend.title=element_blank())
+
+
 ### old code ###
 
 failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
