@@ -1459,7 +1459,7 @@ interaction_p <- summary(left_putamen_FWF_by_anxiety_age_sex_income_education)$c
 pr <- predict_response(left_putamen_FWF_by_anxiety_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Putamen FWF and Anxiety, \n Corrected by Age, Sex, Education, and Income",
+    title = "D. Mean Left Putamen FWF and Anxiety, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** anxiety p < 0.001",
       "anxiety p = ", signif(corr_p_value, 2),
@@ -1516,7 +1516,7 @@ interaction_p <- summary(left_amygdala_KFA_by_anxiety_age_sex_income_education)$
 pr <- predict_response(left_amygdala_KFA_by_anxiety_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "B. Mean Left Amygdala KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
+    title = "E. Mean Left Amygdala KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** anxiety p < 0.001",
       "anxiety p = ", signif(corr_p_value, 2),
@@ -1573,7 +1573,7 @@ interaction_p <- summary(right_amygdala_KFA_by_anxiety_age_sex_income_education)
 pr <- predict_response(right_amygdala_KFA_by_anxiety_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "C. Mean Right Amygdala KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
+    title = "F. Mean Right Amygdala KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** anxiety p < 0.001",
       "anxiety p = ", signif(corr_p_value, 2),
@@ -1649,7 +1649,7 @@ interaction_p <- summary(left_accumbens_area_KFA_by_depression_age_sex_income_ed
 pr <- predict_response(left_accumbens_area_KFA_by_depression_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "C. Mean Left Accumbens Area KFA and Depression, \n Corrected by Age, Sex, Education, and Income",
+    title = "G. Mean Left Accumbens Area KFA and Depression, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** depression p < 0.001",
       "\\* depression p = ", signif(corr_p_value, 2),
@@ -1687,7 +1687,7 @@ interaction_p <- summary(left_accumbens_area_mk_by_anxiety_age_sex_income_educat
 pr <- predict_response(left_accumbens_area_mk_by_anxiety_age_sex_income_education, c( "dki_mk[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "E. Mean Left Accumbens Area MK and Anxiety, \n Corrected by Age, Sex, Education, and Income",
+    title = "H. Mean Left Accumbens Area MK and Anxiety, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** anxiety p < 0.001",
       "anxiety p = ", signif(corr_p_value, 2),
@@ -1745,7 +1745,7 @@ interaction_p <- summary(left_putamen_FWF_by_bp_sys_age_sex_income_education)$co
 pr <- predict_response(left_putamen_FWF_by_bp_sys_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Putamen FWF and sysstolic BP, \n Corrected by Age, Sex, Education, and Income",
+    title = "A. Mean Left Putamen FWF and systolic BP, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** systolic p < 0.001",
       "systolic p = ", signif(corr_p_value, 2),
@@ -1783,7 +1783,8 @@ interaction_p <- summary(left_putamen_FWF_by_bmi_age_sex_income_education)$coeff
 pr <- predict_response(left_putamen_FWF_by_bmi_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Putamen FWF and BMI, \n Corrected by Age, Sex, Education, and Income",
+    y = BMI~(kg/m^2),
+    title = "E. Mean Left Putamen FWF and BMI, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** BMI p < 0.001",
       "BMI p = ", signif(corr_p_value, 2),
@@ -1821,7 +1822,7 @@ interaction_p <- summary(left_amygdala_kfa_by_bp_sys_age_sex_income_education)$c
 pr <- predict_response(left_amygdala_kfa_by_bp_sys_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Amygdala KFA and sysstolic BP, \n Corrected by Age, Sex, Education, and Income",
+    title = "B. Mean Left Amygdala KFA and systolic BP, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** systolic p < 0.001",
       "systolic p = ", signif(corr_p_value, 2),
@@ -1840,7 +1841,7 @@ interaction_p <- summary(left_amygdala_kfa_by_pulse_age_sex_income_education)$co
 pr <- predict_response(left_amygdala_kfa_by_pulse_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Amygdala KFA and Pulse, \n Corrected by Age, Sex, Education, and Income",
+    title = "B. Mean Left Amygdala KFA and Pulse, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** pulse p < 0.001",
       "pulse p = ", signif(corr_p_value, 2),
@@ -1879,7 +1880,7 @@ interaction_p <- summary(right_amygdala_kfa_by_bp_dia_age_sex_income_education)$
 pr <- predict_response(right_amygdala_kfa_by_bp_dia_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Right Amygdala KFA and Diastolic BP, \n Corrected by Age, Sex, Education, and Income",
+    title = "B. Mean Right Amygdala KFA and Diastolic BP, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** diastolic p < 0.001",
       "diastolic p = ", signif(corr_p_value, 2),
@@ -1898,7 +1899,7 @@ interaction_p <- summary(right_amygdala_kfa_by_bp_sys_age_sex_income_education)$
 pr <- predict_response(right_amygdala_kfa_by_bp_sys_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Right Amygdala KFA and sysstolic BP, \n Corrected by Age, Sex, Education, and Income",
+    title = "C. Mean Right Amygdala KFA and systolic BP, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** systolic p < 0.001",
       "systolic p = ", signif(corr_p_value, 2),
@@ -1917,7 +1918,7 @@ interaction_p <- summary(right_amygdala_kfa_by_pulse_age_sex_income_education)$c
 pr <- predict_response(right_amygdala_kfa_by_pulse_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Right Amygdala KFA and Pulse, \n Corrected by Age, Sex, Education, and Income",
+    title = "C. Mean Right Amygdala KFA and Pulse, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** pulse p < 0.001",
       "pulse p = ", signif(corr_p_value, 2),
@@ -1936,7 +1937,8 @@ interaction_p <- summary(right_amygdala_kfa_by_bmi_age_sex_income_education)$coe
 pr <- predict_response(right_amygdala_kfa_by_bmi_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Right Amygdala KFA and BMI, \n Corrected by Age, Sex, Education, and Income",
+    y = BMI~(kg/m^2),
+    title = "F. Mean Right Amygdala KFA and BMI, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** BMI p < 0.001",
       "BMI p = ", signif(corr_p_value, 2),
@@ -1955,7 +1957,7 @@ interaction_p <- summary(left_accumbens_area_kfa_by_bp_dia_age_sex_income_educat
 pr <- predict_response(left_accumbens_area_kfa_by_bp_dia_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area KFA and Diastolic BP, \n Corrected by Age, Sex, Education, and Income",
+    title = "C. Mean Left Accumbens Area KFA and Diastolic BP, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** diastolic p < 0.001",
       "diastolic p = ", signif(corr_p_value, 2),
@@ -1974,7 +1976,7 @@ interaction_p <- summary(left_accumbens_area_kfa_by_bp_sys_age_sex_income_educat
 pr <- predict_response(left_accumbens_area_kfa_by_bp_sys_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area KFA and sysstolic BP, \n Corrected by Age, Sex, Education, and Income",
+    title = "D. Mean Left Accumbens Area KFA and systolic BP, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** systolic p < 0.001",
       "systolic p = ", signif(corr_p_value, 2),
@@ -1993,7 +1995,7 @@ interaction_p <- summary(left_accumbens_area_kfa_by_pulse_age_sex_income_educati
 pr <- predict_response(left_accumbens_area_kfa_by_pulse_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area KFA and Pulse, \n Corrected by Age, Sex, Education, and Income",
+    title = "D. Mean Left Accumbens Area KFA and Pulse, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** pulse p < 0.001",
       "pulse p = ", signif(corr_p_value, 2),
@@ -2012,7 +2014,8 @@ interaction_p <- summary(left_accumbens_area_kfa_by_bmi_age_sex_income_education
 pr <- predict_response(left_accumbens_area_kfa_by_bmi_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area KFA and BMI, \n Corrected by Age, Sex, Education, and Income",
+    y = BMI~(kg/m^2),
+    title = "G. Mean Left Accumbens Area KFA and BMI, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** BMI p < 0.001",
       "BMI p = ", signif(corr_p_value, 2),
@@ -2031,7 +2034,7 @@ interaction_p <- summary(left_accumbens_area_mk_by_bp_dia_age_sex_income_educati
 pr <- predict_response(left_accumbens_area_mk_by_bp_dia_age_sex_income_education, c( "dki_mk[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area MK and Diastolic BP, \n Corrected by Age, Sex, Education, and Income",
+    title = "D. Mean Left Accumbens Area MK and Diastolic BP, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** diastolic p < 0.001",
       "diastolic p = ", signif(corr_p_value, 2),
@@ -2050,7 +2053,7 @@ interaction_p <- summary(left_accumbens_area_mk_by_bp_sys_age_sex_income_educati
 pr <- predict_response(left_accumbens_area_mk_by_bp_sys_age_sex_income_education, c( "dki_mk[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area MK and sysstolic BP, \n Corrected by Age, Sex, Education, and Income",
+    title = "E. Mean Left Accumbens Area MK and systolic BP, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** systolic p < 0.001",
       "systolic p = ", signif(corr_p_value, 2),
@@ -2069,7 +2072,7 @@ interaction_p <- summary(left_accumbens_area_mk_by_pulse_age_sex_income_educatio
 pr <- predict_response(left_accumbens_area_mk_by_pulse_age_sex_income_education, c( "dki_mk[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area MK and Pulse, \n Corrected by Age, Sex, Education, and Income",
+    title = "E. Mean Left Accumbens Area MK and Pulse, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** pulse p < 0.001",
       "pulse p = ", signif(corr_p_value, 2),
@@ -2088,7 +2091,8 @@ interaction_p <- summary(left_accumbens_area_mk_by_bmi_age_sex_income_education)
 pr <- predict_response(left_accumbens_area_mk_by_bmi_age_sex_income_education, c( "dki_mk[all]", "SCD"))
 plot(pr, show_data = T, dot_alpha = 1) + 
   labs(
-    title = "A. Mean Left Accumbens Area MK and BMI, \n Corrected by Age, Sex, Education, and Income",
+    y = BMI~(kg/m^2),
+    title = "H. Mean Left Accumbens Area MK and BMI, \n Corrected by Age, Sex, Education, and Income",
     subtitle = paste0(
       # "*** BMI p < 0.001",
       "BMI p = ", signif(corr_p_value, 2),
