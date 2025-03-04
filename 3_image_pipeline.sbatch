@@ -54,24 +54,6 @@ if [ ! -f $freesurferdir/$j/label/BA_exvivo.thresh.ctab ] && [ -f ${rawanat}_T1w
 	recon-all -motioncor -talairach -nuintensitycor -normalization -gcareg -pctsurfcon -segstats -wmparc -balabels -subjid ${j} -sd ${freesurferdir} -threads 4 -no-isrunning
 fi
 
-if [ ! -f $freesurferdir/$j/stats/rh.AD_sig_thickness.stats ] && [ -f ${rawanat}_T1w.nii.gz ]; then
-	##AD signature regions 
-	cd $freesurferdir/$j
-	side=( lh rh )
-	for s in "${side[@]}"; do
-		mri_annotation2label --hemi ${s} --subject ${j} --annotation aparc.a2009s --outdir a2009s
-		mkdir ${s}_AD_sig
-		AD_sig_list=( G_front_sup G_oc-temp_med-Parahip G_pariet_inf-Angular G_pariet_inf-Supramar G_parietal_sup G_precuneus G_temporal_inf Pole_temporal S_front_inf )
-		for roi in "${AD_sig_list[@]}"; do
-			cp a2009s/$s.$roi.label ${s}_AD_sig
-		done
-		mri_mergelabels -d ${s}_AD_sig -o label/$s.AD_sig.label
-		mri_segstats --slabel ${j} ${s} label/$s.AD_sig.label --i surf/$s.thickness --excludeid 0 --sum stats/$s.AD_sig_thickness.stats
-	done
-	rm -rf a2009s
-	rm -rf *h_AD_sig
-fi
-
 #diffusion preproc step 1
 if [ ! -f $designerdir/residual.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
 	##concatenate and convert raw dwi
