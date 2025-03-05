@@ -3,6 +3,7 @@ library(gtsummary)
 library(ggeffects)
 library(ggtext)
 
+######### subcort GM #################
 failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
                'sub-CC510438', #CTL abnormality in left frontal lobe
                'sub-CC620821', #SCD segmentation errors from large ventricles
@@ -2101,3 +2102,359 @@ plot(pr, show_data = T, dot_alpha = 1) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5),
         legend.title=element_blank())
+
+########## cortical GM ####################
+failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
+               'sub-CC510438', #CTL abnormality in left frontal lobe
+               'sub-CC610308', #parietal lobe cutoff
+               'sub-CC610469', #parietal lobe cutoff
+               'sub-CC620466', #parietal lobe cutoff
+               'sub-CC620821', #SCD segmentation errors from large ventricles
+               'sub-CC621011', #CTL segmentation errors from large ventricles
+               'sub-CC621080', #SCD segmentation errors
+               'sub-CC710214', #parietal lobe cutoff
+               'sub-CC710551', #CTL motion artifacts in DWI
+               'sub-CC711027', #SCD severe motion artifacts in T1
+               'sub-CC712027', #parietal lobe cutoff
+               'sub-CC721434' #CTL segmentation errors from large ventricles
+)
+
+ctx_gm_exclude <- c("participant_id", "lh_AD_signature", "rh_AD_signature",
+                    "Left.Thalamus", "Right.Thalamus", "Left.Caudate", "Right.Caudate",
+                    "Left.Putamen", "Right.Putamen", "Left.Pallidum", "Right.Pallidum",
+                    "Left.Hippocampus", "Right.Hippocampus", "Left.Amygdala", "Right.Amygdala",
+                    "Left.Accumbens.area", "Right.Accumbens.area", "Left.VentralDC", "Right.VentralDC",
+                    "CC_Posterior", "CC_Mid_Posterior", "CC_Central", "CC_Mid_Anterior", "CC_Anterior")
+
+lh_AD_sig_thickness <- read_tsv("freesurfer/lh_AD_sig_thickness.tsv") %>%
+  rename(participant_id=`Measure:mean`, lh_AD_signature=Seg0001)
+lh_aparc_thickness = read_tsv("freesurfer/lh_aparctable_thickness.tsv") %>%
+  rename(participant_id=lh.aparc.thickness) %>%
+  select(!(lh_MeanThickness_thickness:eTIV))
+#import right aparc stats tables (cortical thickness and volume)
+rh_AD_sig_thickness <- read_tsv("freesurfer/rh_AD_sig_thickness.tsv") %>%
+  rename(participant_id=`Measure:mean`, rh_AD_signature=Seg0001)
+rh_aparc_thickness = read_tsv("freesurfer/rh_aparctable_thickness.tsv") %>%
+  rename(participant_id=rh.aparc.thickness) %>%
+  select(!(rh_MeanThickness_thickness:eTIV))
+#create aparc table
+thickness <- left_join(scd_status, lh_aparc_thickness) %>% #join left cortical thickness with SCD stats
+  left_join(., rh_aparc_thickness) %>% #add right cortical thickness
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  # mutate(across(where(is.double), remove_outliers)) %>%
+  rename_with(., ~ gsub("_", ".", .x, fixed = T), ends_with("thickness")) %>%
+  rename_with(., ~ paste0("ctx.", .x, recycle0 = T), ends_with("thickness")) %>%
+  rename_with(., ~ gsub(".thickness", "", .x, fixed = T)) #%>%
+# left_join(., lh_AD_sig_thickness) %>%
+# left_join(., rh_AD_sig_thickness)
+ctx_gm_thickness_table <- thickness %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+for (i in 1:length(AD_sig2meas_files)) {
+  assign(gsub(".tsv", "", 
+              gsub("freesurfer.", "", make.names(AD_sig2meas_files[i]))), 
+         read.delim(AD_sig2meas_files[i]))
+}
+
+fit_FWF <- aseg2fit_FWF %>%
+  left_join(., lh_AD_sig2fit_FWF) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2fit_FWF) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+
+ctx_gm_FWF_table <- fit_FWF %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+fit_NDI <- aseg2fit_NDI %>%
+  left_join(., lh_AD_sig2fit_NDI) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2fit_NDI) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+
+ctx_gm_NDI_table <- fit_NDI %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+fit_ODI <- aseg2fit_ODI %>%
+  left_join(., lh_AD_sig2fit_ODI) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2fit_ODI) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+
+ctx_gm_ODI_table <- fit_ODI %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+dti_fa <- aseg2dti_fa %>%
+  left_join(., lh_AD_sig2dti_fa) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dti_fa) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+
+ctx_gm_fa_table <- dti_fa %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+dti_md <- aseg2dti_md %>%
+  left_join(., lh_AD_sig2dti_md) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dti_md) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+
+ctx_gm_md_table <- dti_md %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+dti_rd <- aseg2dti_rd %>%
+  left_join(., lh_AD_sig2dti_rd) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dti_rd) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  left_join(scd_status, .) 
+ctx_gm_rd_table <- dti_rd %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+dti_ad <- aseg2dti_ad %>%
+  left_join(., lh_AD_sig2dti_ad) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dti_ad) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  left_join(scd_status, .) 
+ctx_gm_ad_table <- dti_ad %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+dki_kfa <- aseg2dki_kfa %>%
+  left_join(., lh_AD_sig2dki_kfa) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dki_kfa) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+
+ctx_gm_kfa_table <- dki_kfa %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+dki_mk <- aseg2dki_mk %>%
+  left_join(., lh_AD_sig2dki_mk) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dki_mk) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+ctx_gm_mk_table <- dki_mk %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+dki_rk <- aseg2dki_rk %>%
+  left_join(., lh_AD_sig2dki_rk) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dki_rk) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  left_join(., jhu2dki_rk) %>%
+  rename(any_of(jhu_lookup)) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+ctx_gm_rk_table <- dki_rk %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+dki_ak <- aseg2dki_ak %>%
+  left_join(., lh_AD_sig2dki_ak) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2dki_ak) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  left_join(., jhu2dki_ak) %>%
+  rename(any_of(jhu_lookup)) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  left_join(scd_status, .)
+ctx_gm_ak_table <- dki_ak %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
+
+mtr_tr30 <- aseg2mtr %>%
+  left_join(., lh_AD_sig2mtr) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2mtr) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+filter(mt_tr=="TR=30ms")
+ctx_gm_mtr_tr30_table <- mtr_tr30 %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")  
+mtr_tr50 <- aseg2mtr %>%
+  left_join(., lh_AD_sig2mtr) %>%
+  rename(lh_AD_signature = AD_signature) %>%
+  left_join(., rh_AD_sig2mtr) %>%
+  rename(rh_AD_signature = AD_signature) %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status, .) %>%
+  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
+filter(mt_tr=="TR=50ms")
+
+ctx_gm_mtr_tr50_table <- mtr_tr50 %>% 
+  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
+              missing = "no"
+              # missing_text = "Excluded Outliers"
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
