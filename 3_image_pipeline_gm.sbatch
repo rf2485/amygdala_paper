@@ -208,21 +208,23 @@ if [ ! -f $designerdir/metrics/dti_V1.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
 	##calculate colormap from diffusion tensor
 	singularity exec --nv --bind $basedir $basedir/neurodock_v1.0.0.sif tensor2metric $designerdir/metrics/DT.nii -vector $designerdir/metrics/dti_V1.nii.gz -modulate none -force
 fi
-if [ ! -f $designerdir/AMICO/NODDI/fit_FWF.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
+if [ ! -f $freesurferdir/$j/diffusion/gm_fit_ODI.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
 	##fit NODDI model using the AMICO program
 	conda deactivate
 	source activate ~/.conda/envs/amico/ #switch to amico conda env
-	python3 $projectdir/amico_noddi.py $j
+	python3 $projectdir/amico_noddi_gm.py $j
 	conda deactivate
 	source activate ~/.conda/envs/fsl_eddy/ #switch back to FSL eddy conda env
 	export FSLDIR=$CONDA_PREFIX
 	source $FSLDIR/etc/fslconf/fsl.sh
 fi
-if [ ! -f $designerdir/FWF_mask.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
+if [ ! -f $designerdir/mk_mask.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
 	##mask voxels with orientation dispersion > 0.8 or free water > 0.7 (Correia et al.)
 	cd $designerdir
-	mri_binarize --i AMICO/NODDI/fit_ODI.nii.gz --max 0.8 --o ODI_mask.nii.gz
-	mri_binarize --i AMICO/NODDI/fit_FWF.nii.gz --max 0.7 --o FWF_mask.nii.gz
+	mri_binarize --i AMICO/NODDI/fit_ODI.nii.gz --min 0 --max 0.8 --o ODI_mask.nii.gz
+	mri_binarize --i AMICO/NODDI/fit_FWF.nii.gz --min 0 --max 0.7 --o FWF_mask.nii.gz
+	##mask voxels in kurtosis images with biologically implausible MK values (Veraat, Hecke, and Sijbers 2011)
+	mri_binarize --i metrics/dki_mk --min 0 --max 4 --o mk_mask.nii.gz
 fi
 
 #generate diffusion Freesurfer stats
@@ -234,19 +236,15 @@ if [ ! -f $freesurferdir/$j/diffusion/b02fs.lta ] && [ -f $rawdwi.nii.gz ]; then
 	## register B0 to t1
 	bbregister --s ${j} --mov diffusion/B0.nii.gz --reg diffusion/b02fs.lta --dti --init-fsl --9
 fi
-if [ ! -f $freesurferdir/$j/diffusion/mni2diff_field.mgz ] && [ -f $rawdwi.nii.gz ]; then
-	## register MNI to B0
-	cd $freesurferdir/$j/diffusion
-	mri_easyreg --ref $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/norm.mgz --flo B0.nii.gz --ref_seg $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/aparc+aseg.mgz --flo_seg aparc+aseg2diff.mgz --bak_field mni2diff_field.mgz --threads 4
-fi
-if [ ! -f $freesurferdir/$j/diffusion/aparc+aseg2diff_NODDI_mask.mgz ] && [ -f $rawdwi.nii.gz ]; then
+if [ ! -f $freesurferdir/$j/diffusion/aparc+aseg2diff_mk_mask.mgz ] && [ -f $rawdwi.nii.gz ]; then
 	## use inverse of b02fs registration to register aparc+aseg to diffusion, then apply NODDI masks	
 	cd $freesurferdir/$j/
 	mri_vol2vol --mov diffusion/B0.nii.gz --targ mri/aparc+aseg.mgz --inv --interp nearest --o diffusion/aparc+aseg2diff.mgz --reg diffusion/b02fs.lta --no-save-reg
 	mri_mask diffusion/aparc+aseg2diff.mgz $designerdir/FWF_mask.nii.gz diffusion/aparc+aseg2diff_FWF_mask.mgz
 	mri_mask diffusion/aparc+aseg2diff_FWF_mask.mgz $designerdir/ODI_mask.nii.gz diffusion/aparc+aseg2diff_NODDI_mask.mgz
+	mri_mask diffusion/aparc+aseg2diff_NODDI_mask.mgz $designerdir/mk_mask.nii.gz diffusion/aparc+aseg2diff_mk_mask.mgz
 fi
-if [ ! -f $freesurferdir/$j/diffusion/lh_diff_AD_sig_NODDI_mask.mgz ] && [ -f $rawdwi.nii.gz ]; then
+if [ ! -f $freesurferdir/$j/diffusion/lh_diff_AD_sig_mk_mask.mgz ] && [ -f $rawdwi.nii.gz ]; then
 	## use aparc.a2009s+aseg to generate Dickerson AD signature regions mask, then apply NODDI masks
 	cd $freesurferdir/$j/	
 	mri_vol2vol --mov diffusion/B0.nii.gz --targ mri/aparc.a2009s+aseg.mgz --inv --interp nearest --o diffusion/aparc.a2009s+aseg2diff.mgz --reg diffusion/b02fs.lta --no-save-reg
@@ -255,9 +253,10 @@ if [ ! -f $freesurferdir/$j/diffusion/lh_diff_AD_sig_NODDI_mask.mgz ] && [ -f $r
 		mri_binarize --i diffusion/aparc.a2009s+aseg2diff.mgz --match-ctab $projectdir/${s}_AD_signature_LUT.txt --o diffusion/${s}_diff_AD_sig.mgz
 		mri_mask diffusion/${s}_diff_AD_sig.mgz $designerdir/FWF_mask.nii.gz diffusion/${s}_diff_AD_sig_FWF_mask.mgz
 		mri_mask diffusion/${s}_diff_AD_sig_FWF_mask.mgz $designerdir/ODI_mask.nii.gz diffusion/${s}_diff_AD_sig_NODDI_mask.mgz
+		mri_mask diffusion/${s}_diff_AD_sig_NODDI_mask.mgz $designerdir/mk_mask.nii.gz diffusion/${s}_diff_AD_sig_mk_mask.mgz
 	done  	
 fi
-if [ ! -f $freesurferdir/$j/diffusion/fit_ODI.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
+if [ ! -f $freesurferdir/$j/diffusion/gm_fit_ODI.nii.gz ] && [ -f $rawdwi.nii.gz ]; then
 	## copy diffusion metrics to freesurferdir
 	cd $freesurferdir/$j/
 	nii_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk dti_ad dti_fa dti_md dti_rd )
@@ -266,22 +265,31 @@ if [ ! -f $freesurferdir/$j/diffusion/fit_ODI.nii.gz ] && [ -f $rawdwi.nii.gz ];
 	done
 	noddi_list=( fit_FWF fit_NDI fit_ODI )
 	for meas in "${noddi_list[@]}"; do
-		cp $designerdir/AMICO/NODDI/${meas}.nii.gz diffusion/
+		cp $designerdir/AMICO/NODDI/${meas}.nii.gz diffusion/gm_${meas}.nii.gz
 	done
 fi
 	
-if [ ! -f $freesurferdir/$j/stats/lh_AD_sig2smi_matlab_p2.stats ] && [ -f $rawdwi.nii.gz ]; then	
-	## apply registered aparc+aseg, AD signature mask, and JHU to diffusion metrics to generate stats
+if [ ! -f $freesurferdir/$j/stats/lh_AD_sig2gm_fit_ODI.stats ] && [ -f $rawdwi.nii.gz ]; then	
+	## apply registered aparc+aseg, AD signature mask to diffusion metrics to generate stats
 	cd $freesurferdir/$j/
-	diff_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk dti_ad dti_fa dti_md dti_rd fit_FWF fit_NDI fit_ODI )
-	for meas in "${pyd_list[@]}"; do
-		### generate stats
-		mri_segstats --seg diffusion/aparc+aseg2diff_NODDI_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/aparc+aseg2${meas}.stats --excludeid 0 30 31 62 63 72 77 78 79 80 81 82 85 2 7 41 46 251 252 253 254 255
+	diff_list=( dti_ad dti_fa dti_md dti_rd gm_fit_FWF gm_fit_NDI gm_fit_ODI )
+	for meas in "${diff_list[@]}"; do
+		### apply NODDI mask, generate stats
+		mri_segstats --seg diffusion/aparc+aseg2diff_NODDI_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/gm_aparc+aseg2${meas}.stats --excludeid 0 30 31 62 63 72 77 78 79 80 81 82 85 2 7 41 46 251 252 253 254 255
 		side=( rh lh )
 		for s in "${side[@]}"; do
 			mri_segstats --seg diffusion/${s}_diff_AD_sig_NODDI_mask.mgz --mask diffusion/${s}_diff_AD_sig_NODDI_mask.mgz --excludeid 0 --ctab $projectdir/${s}_AD_signature_LUT.txt --i diffusion/${meas}.nii.gz --sum stats/${s}_AD_sig2${meas}.stats
 		done
-	done	
+	done
+	dki_list=( dki_ak dki_kfa dki_mk dki_mkt dki_rk )
+	for meas in "${dki_list[@]}"; do
+		### apply MK mask to DKI images, generate stats
+		mri_segstats --seg 	diffusion/aparc+aseg2diff_mk_mask.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i diffusion/${meas}.nii.gz --sum stats/gm_aparc+aseg2${meas}.stats --excludeid 0 30 31 62 63 72 77 78 79 80 81 82 85 2 7 41 46 251 252 253 254 255
+		side=( rh lh )
+		for s in "${side[@]}"; do
+			mri_segstats --seg diffusion/${s}_diff_AD_sig_mk_mask.mgz --mask diffusion/${s}_diff_AD_sig_mk_mask.mgz --excludeid 0 --ctab $projectdir/${s}_AD_signature_LUT.txt --i diffusion/${meas}.nii.gz --sum stats/${s}_AD_sig2${meas}.stats
+		done
+	done
 fi
 
 # mtr analysis
@@ -315,11 +323,6 @@ if [ ! -f $freesurferdir/$j/mti/fs2mtr_field.mgz ] && [ -f ${rawmti}_mti_bl.nii.
 	cd $freesurferdir/$j
 	mri_easyreg --ref mri/T1.mgz --flo mti/mtr.nii.gz --ref_seg mri/synthseg.mgz --flo_seg mti/mtr_synthseg.mgz --bak_field mti/fs2mtr_field.mgz --threads 4 --affine_only
 fi
-if [ ! -f $freesurferdir/$j/mti/mni2mtr_field.mgz ] && [ -f ${rawmti}_mti_bl.nii.gz ]; then
-	## register MNI to MTR
-	cd $freesurferdir/$j/mti
-	mri_easyreg --ref $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/norm.mgz --flo mtr.nii.gz --ref_seg $FREESURFER_HOME/subjects/cvs_avg35_inMNI152/mri/aparc+aseg.mgz --flo_seg aparc+aseg2mtr.mgz --bak_field mni2mtr_field.mgz --threads 4
-fi
 if [ ! -f $freesurferdir/$j/mti/aparc+aseg2mtr.mgz ] && [ -f ${rawmti}_mti_bl.nii.gz ]; then
 	##register aparc+aseg to mtr, using the inverse of the mtr to t1 registration
 	cd $freesurferdir/$j
@@ -337,7 +340,7 @@ fi
 if [ ! -f $freesurferdir/$j/stats/lh_AD_sig2mtr.stats ] && [ -f ${rawmti}_mti_bl.nii.gz ]; then
 	## apply registered aparc+aseg, AD signature mask to mtr to generate stats
 	cd $freesurferdir/$j
-	mri_segstats --seg mti/aparc+aseg2mtr.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i mti/mtr.nii.gz --sum stats/aparc+aseg2mtr.stats --excludeid 0 30 31 62 63 72 77 78 79 80 81 82 85
+	mri_segstats --seg mti/aparc+aseg2mtr.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt --i mti/mtr.nii.gz --sum stats/gm_aparc+aseg2mtr.stats --excludeid 0 30 31 62 63 72 77 78 79 80 81 82 85 2 7 41 46 251 252 253 254 255
 	side=( rh lh )
 	for s in "${side[@]}"; do
 		mri_segstats --seg mti/${s}_mtr_AD_sig.mgz --mask mti/${s}_mtr_AD_sig.mgz --excludeid 0 --ctab $projectdir/${s}_AD_signature_LUT.txt --i mti/mtr.nii.gz --sum stats/${s}_AD_sig2mtr.stats
