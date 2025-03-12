@@ -1,4 +1,4 @@
-source("1_data_preparation.R")
+source("1_data_preparation_gm.R")
 library(gtsummary)
 library(ggeffects)
 library(ggtext)
@@ -133,13 +133,15 @@ volumes <- left_join(scd_status, aseg) %>% #join volumes with SCD status
          Right.Cerebral.White.Matter	= rhCerebralWhiteMatterVol) %>%
   select(!c((BrainSegVol:CortexVol), (CerebralWhiteMatterVol:EstimatedTotalIntraCranialVol)))
 subcort_gm_volumes_table <- volumes %>% 
-  select(any_of(subcort_gm)) %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels
+              label = subcort_labels,
+              include = any_of(subcort_gm)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% #filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**") %>%
@@ -152,12 +154,15 @@ fit_NDI <- aseg2fit_NDI %>%
   mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
 subcort_gm_NDI_table <- fit_NDI %>% 
-  select(any_of(subcort_gm)) %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels) %>%
+              label = subcort_labels,
+              include = any_of(subcort_gm)
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% #filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")
@@ -170,31 +175,20 @@ fit_FWF <- aseg2fit_FWF %>%
   mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
 subcort_gm_FWF_table <- fit_FWF %>% 
-  select(any_of(subcort_gm)) %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-               label = subcort_labels) %>%
+              label = subcort_labels,
+              include = any_of(subcort_gm)
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**") %>%
   modify_caption("<div style='text-align: left; font-weight: bold;'> Table 4:</div> <div style='text-align: left'> 
                  Statistically significant group differences in subcortical regional mean FWF and ODI. 
-                 FWF: Free Water Fraction. ODI: Orientation Dispersion Index. 
-                 SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
-subcort_gm_FWF_table_all <- fit_FWF %>% 
-  select(any_of(subcort_gm)) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% bold_p() %>% #filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Supplemental Table 2:</div> <div style='text-align: left'> 
-                 All group differences in subcortical regional mean FWF and ODI. 
                  FWF: Free Water Fraction. ODI: Orientation Dispersion Index. 
                  SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
 
@@ -203,42 +197,36 @@ fit_ODI <- aseg2fit_ODI %>%
   mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
 subcort_gm_ODI_table <- fit_ODI %>% 
-  select(any_of(subcort_gm)) %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-               label = subcort_labels) %>%
+              label = subcort_labels,
+              include = any_of(subcort_gm)
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-subcort_gm_ODI_table_all <- fit_ODI %>% 
-  select(any_of(subcort_gm)) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% bold_p () %>% #filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")
 
 tbl_merge(list(subcort_gm_FWF_table, subcort_gm_ODI_table), 
           tab_spanner = c("**FWF**", "**ODI**"))
-tbl_merge(list(subcort_gm_FWF_table_all, subcort_gm_ODI_table_all), 
-          tab_spanner = c("**FWF**", "**ODI**"))
 
 dti_fa <- aseg2dti_fa %>%
   rename(participant_id = Measure.mean) %>%
   mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
-subcort_gm_fa_table_all <- dti_fa %>% 
-  select(any_of(subcort_gm)) %>% 
+subcort_gm_fa_table <- dti_fa %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-               label = subcort_labels) %>%
+              label = subcort_labels,
+              include = any_of(subcort_gm)
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% bold_p() %>% #filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**") %>%
@@ -251,18 +239,21 @@ dti_md <- aseg2dti_md %>%
   rename(participant_id = Measure.mean) %>%
   mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
-subcort_gm_md_table_all <- dti_md %>% 
-  select(any_of(subcort_gm)) %>% 
+subcort_gm_md_table <- dti_md %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels) %>%
+              label = subcort_labels,
+              include = any_of(subcort_gm)
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% bold_p() %>% #filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")
 
-tbl_merge(list(subcort_gm_fa_table_all, subcort_gm_md_table_all), 
+tbl_merge(list(subcort_gm_fa_table, subcort_gm_md_table), 
           tab_spanner = c("**FA**", "**MD**"))
 
 dki_kfa <- aseg2dki_kfa %>%
@@ -270,31 +261,20 @@ dki_kfa <- aseg2dki_kfa %>%
   mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .)
 subcort_gm_kfa_table <- dki_kfa %>% 
-  select(any_of(subcort_gm)) %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels) %>%
+              label = subcort_labels,
+              include = any_of(subcort_gm)
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**") %>%
   modify_caption("<div style='text-align: left; font-weight: bold;'> Table 5:</div> <div style='text-align: left'> 
                  Statistically significant group differences in subcortical regional mean KFA and MD. 
-                 KFA: Kurtosis Fractional Anisotropy. MK: Mean Kurtosis. 
-                 SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
-subcort_gm_kfa_table_all <- dki_kfa %>% 
-  select(any_of(subcort_gm)) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% bold_p() %>% #filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Supplemental Table 4:</div> <div style='text-align: left'> 
-                 All group differences in subcortical regional mean KFA and MD. 
                  KFA: Kurtosis Fractional Anisotropy. MK: Mean Kurtosis. 
                  SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
 
@@ -305,29 +285,20 @@ dki_mk <- aseg2dki_mk %>%
   mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
   left_join(scd_status, .) 
 subcort_gm_mk_table <- dki_mk %>% 
-  select(any_of(subcort_gm)) %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels) %>%
+              label = subcort_labels,
+              include = any_of(subcort_gm)
+  ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-subcort_gm_mk_table_all <- dki_mk %>% 
-  select(any_of(subcort_gm)) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% bold_p() %>% #filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")
 
 tbl_merge(list(subcort_gm_kfa_table, subcort_gm_mk_table), 
-          tab_spanner = c("**KFA**", "**MK**"))
-tbl_merge(list(subcort_gm_kfa_table_all, subcort_gm_mk_table_all), 
           tab_spanner = c("**KFA**", "**MK**"))
 
 mtr_wm <- read_tsv("freesurfer/mtr_wm.tsv") %>%
@@ -358,16 +329,16 @@ mtr_tr30 <- aseg2mtr %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   filter(mt_tr=="TR=30ms")
-subcort_gm_mtr_tr30_table_all <- mtr_tr30 %>% 
-  select(any_of(subcort_gm)) %>% 
+subcort_gm_mtr_tr30_table <- mtr_tr30 %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              # missing = "no"
-              # missing_text = "Excluded Outliers",
-              label = subcort_labels
+              label = subcort_labels,
+              include = any_of(subcort_gm)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% #filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**") %>%
@@ -380,21 +351,21 @@ mtr_tr50 <- aseg2mtr %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   filter(mt_tr=="TR=50ms")
-subcort_gm_mtr_tr50_table_all <- mtr_tr50 %>% 
-  select(any_of(subcort_gm)) %>% 
+subcort_gm_mtr_tr50_table <- mtr_tr50 %>% 
+  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              # missing = "no"
-              # missing_text = "Excluded Outliers",
-              label = subcort_labels
+              label = subcort_labels,
+              include = any_of(subcort_gm)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% #filter_p() %>%
+  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")  
 
-tbl_merge(list(subcort_gm_mtr_tr30_table_all, subcort_gm_mtr_tr50_table_all), 
+tbl_merge(list(subcort_gm_mtr_tr30_table, subcort_gm_mtr_tr50_table), 
           tab_spanner = c("**MTR TR=30ms**", "**MTR TR=50ms**"))
 
 ### 3.2	Correlations Between Imaging Metrics ####
@@ -2458,3 +2429,30 @@ ctx_gm_mtr_tr50_table <- mtr_tr50 %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")
+
+left_amygdala %>% 
+  select(-participant_id) %>% 
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
+              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**") %>%
+  modify_caption("<div style='text-align: left; font-weight: bold;'> Left Amygdala </div>")
+
+right_amygdala %>% 
+  select(-participant_id) %>% 
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
+              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**") %>%
+  modify_caption("<div style='text-align: left; font-weight: bold;'> Right Amygdala </div>")
+
