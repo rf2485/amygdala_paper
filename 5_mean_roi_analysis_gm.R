@@ -56,8 +56,8 @@ scd_status <- dwi_over_55 %>% select(participant_id, SCD, mt_tr, Income,
                                      height_cardio, weight_cardio,
                                      additional_hads_anxiety, additional_hads_depression) %>%
   filter(!participant_id %in% failed_qc) %>%
-  mutate(bmi_cardio = weight_cardio / (height_cardio/100)^2) 
-scd_status <- set_label(scd_status, bmi_cardio = "BMI (kg/m<sup>2</sup>)")
+  mutate(bmi_cardio = weight_cardio / (height_cardio/100)^2) %>%
+  select(!height_cardio, !weight_cardio)
 scd_status$additional_hads_depression[scd_status$additional_hads_depression > 21] <- NA
 
 #demographics table
@@ -2430,6 +2430,7 @@ ctx_gm_mtr_tr50_table <- mtr_tr50 %>%
                 label ~ "**Region of Interest**",
                 estimate ~ "**Effect Size**")
 
+#### focus on MTL ####
 left_amygdala %>% 
   select(-participant_id) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
@@ -2456,3 +2457,205 @@ right_amygdala %>%
                 estimate ~ "**Effect Size**") %>%
   modify_caption("<div style='text-align: left; font-weight: bold;'> Right Amygdala </div>")
 
+scd_status <- dwi_over_55 %>% select(participant_id, SCD, mt_tr, Income, 
+                                     Ethnicity, Sex, age, age_education_completed,
+                                     homeint_storyrecall_d, bp_dia_mean_cardio, 
+                                     bp_sys_mean_cardio, pulse_mean_cardio,
+                                     height_cardio, weight_cardio,
+                                     additional_hads_anxiety, additional_hads_depression) %>%
+  filter(!participant_id %in% failed_qc) %>%
+  mutate(bmi_cardio = weight_cardio / (height_cardio/100)^2) %>%
+  select(!height_cardio, !weight_cardio)
+scd_status$additional_hads_depression[scd_status$additional_hads_depression > 21] <- NA
+
+aseg <- read_tsv("freesurfer/asegtable.tsv") %>%
+  rename(participant_id=`Measure:volume`)
+names(aseg) <- make.names(names(aseg))
+aparc2meas_files <- list.files(path = "freesurfer", 
+                               pattern = "aparc.*aseg.*\\.*tsv", 
+                               full.names = T)
+
+for (i in 1:length(aparc2meas_files)) {
+  assign(gsub(".tsv", "", 
+              gsub("freesurfer.aparc.", "", make.names(aparc2meas_files[i]))), 
+         read.delim(aparc2meas_files[i]))
+}
+
+scd_status <- dwi_over_55 %>% select(participant_id, SCD, mt_tr, Income, 
+                                     Ethnicity, Sex, age, age_education_completed,
+                                     homeint_storyrecall_d, bp_dia_mean_cardio, 
+                                     bp_sys_mean_cardio, pulse_mean_cardio,
+                                     height_cardio, weight_cardio,
+                                     additional_hads_anxiety, additional_hads_depression) %>%
+  filter(!participant_id %in% failed_qc) %>%
+  mutate(bmi_cardio = weight_cardio / (height_cardio/100)^2) %>%
+  select(-height_cardio, -weight_cardio)
+scd_status$additional_hads_depression[scd_status$additional_hads_depression > 21] <- NA
+
+volumes <- left_join(scd_status, aseg) %>% #join volumes with SCD status
+  mutate(across(c(Left.Lateral.Ventricle:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename(Left.Cerebral.White.Matter	= lhCerebralWhiteMatterVol, 
+         Right.Cerebral.White.Matter	= rhCerebralWhiteMatterVol) %>%
+  select(!c((BrainSegVol:CortexVol), (CerebralWhiteMatterVol:EstimatedTotalIntraCranialVol)))
+
+mtl_imaging <- aseg %>% 
+  mutate(across(c(Left.Lateral.Ventricle:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_volume"), !participant_id)
+mtl_imaging <- aseg2dki_ak %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  rename_with(~paste0(., "_AK"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dki_kfa %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_KFA"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dki_mk %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  rename_with(~paste0(., "_MK"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dki_mkt %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  rename_with(~paste0(., "_MKT"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dki_rk %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  rename_with(~paste0(., "_RK"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dti_ad %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_AxD"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dti_fa %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_FA"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dti_md %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_MD"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dti_rd %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_RD"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2fit_FWF %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Correia et al.)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 0.7, NA))) %>%
+  rename_with(~paste0(., "_FWF"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2fit_NDI %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_NDI"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2fit_ODI %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Correia et al.)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 0.8, NA))) %>%
+  rename_with(~paste0(., "_ODI"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2mtr %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status, .) %>%
+  filter(mt_tr=="TR=30ms") %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_MTR_TR30"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2mtr %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status, .) %>%
+  filter(mt_tr=="TR=50ms") %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_MTR_TR50"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+
+
+#across groups
+mtl_imaging_across_groups <- scd_status %>%
+  select(participant_id, age, age_education_completed, 
+         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
+         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
+  left_join(., mtl_imaging)
+mtl_imaging_matrix <- mtl_imaging_across_groups %>% select(Left.Amygdala_volume:ncol(.))
+scd_status_matrix <- mtl_imaging_across_groups %>% select(age:additional_hads_depression)
+corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
+                                adjust = "fdr")
+corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
+
+#scd only
+mtl_imaging_scd <- scd_status %>%
+  dplyr::filter(SCD == "SCD") %>%
+  select(participant_id, age, age_education_completed, 
+         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
+         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
+  left_join(., mtl_imaging)
+mtl_imaging_matrix <- mtl_imaging_scd %>% select(Left.Amygdala_volume:ncol(.))
+scd_status_matrix <- mtl_imaging_scd %>% select(age:additional_hads_depression)
+corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
+                                adjust = "fdr")
+corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
+
+#control only
+mtl_imaging_control <- scd_status %>%
+  dplyr::filter(SCD == "Control") %>%
+  select(participant_id, age, age_education_completed, 
+         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
+         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
+  left_join(., mtl_imaging)
+mtl_imaging_matrix <- mtl_imaging_control %>% select(Left.Amygdala_volume:ncol(.))
+scd_status_matrix <- mtl_imaging_control %>% select(age:additional_hads_depression)
+corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
+                                adjust = "fdr")
+corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
+
+mtl_imaging <- left_join(scd_status, mtl_imaging)
+mtl_imaging %>%
+  select(-participant_id) %>% 
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
+              include = c(Left.Amygdala_MK, Left.Amygdala_RK, Left.Amygdala_KFA, Left.Amygdala_AK)
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
