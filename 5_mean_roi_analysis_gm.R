@@ -113,11 +113,11 @@ scd_status %>% select(SCD, bp_sys_mean_cardio, bp_dia_mean_cardio, pulse_mean_ca
   gt::fmt_markdown(columns = vars(label))
 
 #import aseg stats table (subcortical volumes)
-aseg <- read_tsv("freesurfer/asegtable.tsv") %>%
+aseg <- read_tsv("freesurfer/asegtable_gm.tsv") %>%
   rename(participant_id=`Measure:volume`)
 names(aseg) <- make.names(names(aseg))
 aparc2meas_files <- list.files(path = "freesurfer", 
-                               pattern = "aparc.*aseg.*\\.*tsv", 
+                               pattern = "aparc.*aseg.*_gm\\.*tsv", 
                                full.names = T)
 
 for (i in 1:length(aparc2meas_files)) {
@@ -128,178 +128,53 @@ for (i in 1:length(aparc2meas_files)) {
 
 volumes <- left_join(scd_status, aseg) %>% #join volumes with SCD status
   mutate(across(c(Left.Lateral.Ventricle:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   rename(Left.Cerebral.White.Matter	= lhCerebralWhiteMatterVol, 
          Right.Cerebral.White.Matter	= rhCerebralWhiteMatterVol) %>%
   select(!c((BrainSegVol:CortexVol), (CerebralWhiteMatterVol:EstimatedTotalIntraCranialVol)))
-subcort_gm_volumes_table <- volumes %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Supplemental Table 1:</div> <div style='text-align: left'> 
-                 Group differences in subcortical regional volumes, normalized by estimated total intracranial volume, and mean NDI. 
-                 NDI: Neurite Density Index. SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
 
-fit_NDI <- aseg2fit_NDI %>%
+fit_NDI <- aseg2gm_fit_NDI_gm %>%
   rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
-subcort_gm_NDI_table <- fit_NDI %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
 
-tbl_merge(list(subcort_gm_volumes_table, subcort_gm_NDI_table), 
-          tab_spanner = c("**Volume**", "**NDI**"))
-
-fit_FWF <- aseg2fit_FWF %>%
+fit_FWF <- aseg2gm_fit_FWF_gm %>%
   rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
-subcort_gm_FWF_table <- fit_FWF %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Table 4:</div> <div style='text-align: left'> 
-                 Statistically significant group differences in subcortical regional mean FWF and ODI. 
-                 FWF: Free Water Fraction. ODI: Orientation Dispersion Index. 
-                 SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
 
-fit_ODI <- aseg2fit_ODI %>%
+fit_ODI <- aseg2gm_fit_ODI_gm %>%
   rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
-subcort_gm_ODI_table <- fit_ODI %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
 
-tbl_merge(list(subcort_gm_FWF_table, subcort_gm_ODI_table), 
-          tab_spanner = c("**FWF**", "**ODI**"))
-
-dti_fa <- aseg2dti_fa %>%
+dti_fa <- aseg2dti_fa_gm %>%
   rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
-subcort_gm_fa_table <- dti_fa %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Supplemental Table 3:</div> <div style='text-align: left'> 
-                 All group differences in subcortical regional mean FA and MD. 
-                 FA: Fractional Anisotropy. MD: Mean Diffusivity. 
-                 SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
 
-dti_md <- aseg2dti_md %>%
+dti_md <- aseg2dti_md_gm %>%
   rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
   left_join(scd_status, .) 
-subcort_gm_md_table <- dti_md %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
 
-tbl_merge(list(subcort_gm_fa_table, subcort_gm_md_table), 
-          tab_spanner = c("**FA**", "**MD**"))
-
-dki_kfa <- aseg2dki_kfa %>%
+dti_ad <- aseg2dti_ad_gm %>%
   rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  left_join(scd_status, .) 
+
+dti_rd <- aseg2dti_rd_gm %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status, .) 
+
+dki_kfa <- aseg2dki_kfa_gm %>%
+  rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .)
-subcort_gm_kfa_table <- dki_kfa %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Table 5:</div> <div style='text-align: left'> 
-                 Statistically significant group differences in subcortical regional mean KFA and MD. 
-                 KFA: Kurtosis Fractional Anisotropy. MK: Mean Kurtosis. 
-                 SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
 
-dki_mk <- aseg2dki_mk %>%
+dki_mk <- aseg2dki_mk_gm %>%
   rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
   left_join(scd_status, .) 
-subcort_gm_mk_table <- dki_mk %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
 
-tbl_merge(list(subcort_gm_kfa_table, subcort_gm_mk_table), 
-          tab_spanner = c("**KFA**", "**MK**"))
+dki_ak <- aseg2dki_ak_gm %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status, .) 
+
+dki_rk <- aseg2dki_rk_gm %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status, .) 
 
 mtr_wm <- read_tsv("freesurfer/mtr_wm.tsv") %>%
   rename(participant_id=`Measure:mean`, mtr_wm=Seg0001)
@@ -309,138 +184,207 @@ mtr_wm_gm_ratio <- scd_status %>%
   left_join(., mtr_wm) %>%
   left_join(., mtr_gm)
 mtr_wm_gm_ratio$mtr_wm_gm_ratio <- mtr_wm_gm_ratio$mtr_wm / mtr_wm_gm_ratio$mtr_gm
-mtr_wm_gm_ratio %>% select(mt_tr, mtr_wm_gm_ratio) %>% 
-  tbl_summary(by = mt_tr, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = mtr_wm_gm_ratio ~ "MTR white matter-gray matter ratio") %>% 
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% bold_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Table 6:</div> <div style='text-align: left'> 
-                 Differences in MTR gray matter-white matter ratio between images with TR=30ms and TR=50ms, 
-                 collapsed across SCD and controls.
-                 MTR: Magnetization Transfer Ratio. TR: repetition time, an image acquisition parameter. 
-                 SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
-
 
 mtr_tr30 <- aseg2mtr %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   filter(mt_tr=="TR=30ms")
-subcort_gm_mtr_tr30_table <- mtr_tr30 %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Supplemental Table 5:</div> <div style='text-align: left'> 
-                 All group differences in subcortical regional mean MTR for images with TR=30ms and TR=50ms.
-                 MTR: Magnetization Transfer Ratio. TR: repetition time, an image acquisition parameter. 
-                 SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
 
 mtr_tr50 <- aseg2mtr %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   filter(mt_tr=="TR=50ms")
-subcort_gm_mtr_tr50_table <- mtr_tr50 %>% 
-  select(any_of(subcort_gm), age, Sex, age_education_completed) %>% 
+
+
+#### focus on MTL ####
+left_amygdala %>% 
+  select(-participant_id) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              label = subcort_labels,
-              include = any_of(subcort_gm)
+              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p(adj.vars = c(age, Sex, age_education_completed)) %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_footnote(p.value ~ "ANCOVA, adjusted for age, sex, and education", statistic ~ "ANCOVA, adjusted for age, sex, and education") %>%
+  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")  
+                estimate ~ "**Effect Size**") %>%
+  modify_caption("<div style='text-align: left; font-weight: bold;'> Left Amygdala </div>")
 
-tbl_merge(list(subcort_gm_mtr_tr30_table, subcort_gm_mtr_tr50_table), 
-          tab_spanner = c("**MTR TR=30ms**", "**MTR TR=50ms**"))
+right_amygdala %>% 
+  select(-participant_id) %>% 
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
+              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**") %>%
+  modify_caption("<div style='text-align: left; font-weight: bold;'> Right Amygdala </div>")
+
+mtl_imaging <- aseg %>% 
+  mutate(across(c(Left.Lateral.Ventricle:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_volume"), !participant_id)
+mtl_imaging <- aseg2dki_ak %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  rename_with(~paste0(., "_AK"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dki_kfa %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_KFA"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dki_mk %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  rename_with(~paste0(., "_MK"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dki_mkt %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  rename_with(~paste0(., "_MKT"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dki_rk %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
+  rename_with(~paste0(., "_RK"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dti_ad %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_AxD"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dti_fa %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_FA"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dti_md %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_MD"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2dti_rd %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_RD"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2fit_FWF %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Correia et al.)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 0.7, NA))) %>%
+  rename_with(~paste0(., "_FWF"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2fit_NDI %>%
+  rename(participant_id = Measure.mean) %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_NDI"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2fit_ODI %>%
+  rename(participant_id = Measure.mean) %>%
+  #remove biologically implausible values (Correia et al.)
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  mutate(across(where(is.double), ~ replace(., . > 0.8, NA))) %>%
+  rename_with(~paste0(., "_ODI"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2mtr %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status, .) %>%
+  filter(mt_tr=="TR=30ms") %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_MTR_TR30"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+mtl_imaging <- aseg2mtr %>%
+  rename(participant_id = Measure.mean) %>%
+  left_join(scd_status, .) %>%
+  filter(mt_tr=="TR=50ms") %>%
+  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
+  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
+  rename_with(~paste0(., "_MTR_TR50"), !participant_id) %>%
+  left_join(mtl_imaging, .)
+
+
+#across groups
+mtl_imaging_across_groups <- scd_status %>%
+  select(participant_id, age, age_education_completed, 
+         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
+         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
+  left_join(., mtl_imaging)
+mtl_imaging_matrix <- mtl_imaging_across_groups %>% select(Left.Amygdala_volume:ncol(.))
+scd_status_matrix <- mtl_imaging_across_groups %>% select(age:additional_hads_depression)
+corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
+                                adjust = "fdr")
+corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
+
+#scd only
+mtl_imaging_scd <- scd_status %>%
+  dplyr::filter(SCD == "SCD") %>%
+  select(participant_id, age, age_education_completed, 
+         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
+         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
+  left_join(., mtl_imaging)
+mtl_imaging_matrix <- mtl_imaging_scd %>% select(Left.Amygdala_volume:ncol(.))
+scd_status_matrix <- mtl_imaging_scd %>% select(age:additional_hads_depression)
+corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
+                                adjust = "fdr")
+corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
+
+#control only
+mtl_imaging_control <- scd_status %>%
+  dplyr::filter(SCD == "Control") %>%
+  select(participant_id, age, age_education_completed, 
+         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
+         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
+  left_join(., mtl_imaging)
+mtl_imaging_matrix <- mtl_imaging_control %>% select(Left.Amygdala_volume:ncol(.))
+scd_status_matrix <- mtl_imaging_control %>% select(age:additional_hads_depression)
+corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
+                                adjust = "fdr")
+corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
+
+mtl_imaging <- left_join(scd_status, mtl_imaging)
+mtl_imaging %>%
+  select(-participant_id) %>% 
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
+              include = c(Left.Amygdala_MK, Left.Amygdala_RK, Left.Amygdala_KFA, Left.Amygdala_AK)
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**")
 
 ### 3.2	Correlations Between Imaging Metrics ####
-
-left_putamen <- volumes %>% dplyr::select(participant_id:bmi_cardio, Left.Putamen) %>%
-  rename(volume = "Left.Putamen")
-left_putamen <- fit_NDI %>% dplyr::select(participant_id, Left.Putamen) %>%
-  rename(fit_NDI = "Left.Putamen") %>% full_join(left_putamen, .)
-left_putamen <- fit_FWF %>% dplyr::select(participant_id, Left.Putamen) %>%
-  rename(fit_FWF = "Left.Putamen") %>% full_join(left_putamen, .)
-left_putamen <- fit_ODI %>% dplyr::select(participant_id, Left.Putamen) %>%
-  rename(fit_ODI = "Left.Putamen") %>% full_join(left_putamen, .)
-left_putamen <- dti_fa %>% dplyr::select(participant_id, Left.Putamen) %>%
-  rename(dti_fa = "Left.Putamen") %>% full_join(left_putamen, .)
-left_putamen <- dti_md %>% dplyr::select(participant_id, Left.Putamen) %>%
-  rename(dti_md = "Left.Putamen") %>% full_join(left_putamen, .)
-left_putamen <- dki_kfa %>% dplyr::select(participant_id, Left.Putamen) %>%
-  rename(dki_kfa = "Left.Putamen") %>% full_join(left_putamen, .)
-left_putamen <- dki_mk %>% dplyr::select(participant_id, Left.Putamen) %>%
-  rename(dki_mk = "Left.Putamen") %>% full_join(left_putamen, .)
-left_putamen <- mtr_tr30 %>% dplyr::select(participant_id, Left.Putamen) %>%
-  rename(mtr_tr30 = "Left.Putamen") %>% full_join(left_putamen, .)
-left_putamen <- mtr_tr50 %>% dplyr::select(participant_id, Left.Putamen) %>%
-  rename(mtr_tr50 = "Left.Putamen") %>% full_join(left_putamen, .)
-
-left_putamen <- set_label(left_putamen,
-                          fit_NDI = "NDI",
-                          fit_FWF = "FWF",
-                          fit_ODI = "ODI",
-                          dti_fa = "FA",
-                          dti_md = "MD",
-                          dki_kfa = "KFA",
-                          dki_mk = "MK",
-                          mtr_tr30 = "MTR TR=30ms",
-                          mtr_tr50 = "MTR TR=50ms"
-)
-
-
-left_putamen_FWF_by_volume_all <- 
-  lm(volume ~ fit_FWF * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_putamen)
-anova(left_putamen_FWF_by_volume_all) #age significant
-left_putamen_FWF_by_NDI_all <- 
-  lm(fit_NDI ~ fit_FWF * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_putamen)
-anova(left_putamen_FWF_by_NDI_all) #age and sex significant
-left_putamen_FWF_by_ODI_all <- 
-  lm(fit_ODI ~ fit_FWF * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_putamen)
-anova(left_putamen_FWF_by_ODI_all) #age significant
-left_putamen_FWF_by_FA_all <- 
-  lm(dti_fa ~ fit_FWF * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_putamen)
-anova(left_putamen_FWF_by_FA_all) #age and sex significant
-left_putamen_FWF_by_MD_all <- 
-  lm(dti_md ~ fit_FWF * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_putamen)
-anova(left_putamen_FWF_by_MD_all) #age significant
-left_putamen_FWF_by_KFA_all <- 
-  lm(dki_kfa ~ fit_FWF * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_putamen)
-anova(left_putamen_FWF_by_KFA_all) #sex and ethnicity significant
-left_putamen_FWF_by_MK_all <- 
-  lm(dki_mk ~ fit_FWF * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_putamen)
-anova(left_putamen_FWF_by_MK_all) #age significant
-left_putamen_FWF_by_mtr_tr30_all <- 
-  lm(mtr_tr30 ~ fit_FWF * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_putamen)
-anova(left_putamen_FWF_by_mtr_tr30_all) #none significant
-left_putamen_FWF_by_mtr_tr50_all <- 
-  lm(mtr_tr50 ~ fit_FWF * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_putamen)
-anova(left_putamen_FWF_by_mtr_tr50_all) #age and sex significant
-
 left_amygdala <- volumes %>% dplyr::select(participant_id:bmi_cardio, Left.Amygdala) %>%
   rename(volume = "Left.Amygdala")
 left_amygdala <- fit_NDI %>% dplyr::select(participant_id, Left.Amygdala) %>%
@@ -473,11 +417,6 @@ left_amygdala <- set_label(left_amygdala,
                            mtr_tr30 = "MTR TR=30ms",
                            mtr_tr50 = "MTR TR=50ms"
 )
-
-left_amygdala_KFA_by_volume_all <- 
-  lm(volume ~ dki_kfa * SCD + age + Sex + age_education_completed + Income + Ethnicity,
-     left_amygdala)
-anova(left_amygdala_KFA_by_volume_all) #age, education, Income significant
 
 right_amygdala <- volumes %>% dplyr::select(participant_id:bmi_cardio, Right.Amygdala) %>%
   rename(volume = "Right.Amygdala")
@@ -512,211 +451,8 @@ right_amygdala <- set_label(right_amygdala,
                             mtr_tr50 = "MTR TR=50ms"
 )
 
-left_accumbens_area <- volumes %>% dplyr::select(participant_id:bmi_cardio, Left.Accumbens.area) %>%
-  rename(volume = "Left.Accumbens.area")
-left_accumbens_area <- fit_NDI %>% dplyr::select(participant_id, Left.Accumbens.area) %>%
-  rename(fit_NDI = "Left.Accumbens.area") %>% full_join(left_accumbens_area, .)
-left_accumbens_area <- fit_FWF %>% dplyr::select(participant_id, Left.Accumbens.area) %>%
-  rename(fit_FWF = "Left.Accumbens.area") %>% full_join(left_accumbens_area, .)
-left_accumbens_area <- fit_ODI %>% dplyr::select(participant_id, Left.Accumbens.area) %>%
-  rename(fit_ODI = "Left.Accumbens.area") %>% full_join(left_accumbens_area, .)
-left_accumbens_area <- dti_fa %>% dplyr::select(participant_id, Left.Accumbens.area) %>%
-  rename(dti_fa = "Left.Accumbens.area") %>% full_join(left_accumbens_area, .)
-left_accumbens_area <- dti_md %>% dplyr::select(participant_id, Left.Accumbens.area) %>%
-  rename(dti_md = "Left.Accumbens.area") %>% full_join(left_accumbens_area, .)
-left_accumbens_area <- dki_kfa %>% dplyr::select(participant_id, Left.Accumbens.area) %>%
-  rename(dki_kfa = "Left.Accumbens.area") %>% full_join(left_accumbens_area, .)
-left_accumbens_area <- dki_mk %>% dplyr::select(participant_id, Left.Accumbens.area) %>%
-  rename(dki_mk = "Left.Accumbens.area") %>% full_join(left_accumbens_area, .)
-left_accumbens_area <- mtr_tr30 %>% dplyr::select(participant_id, Left.Accumbens.area) %>%
-  rename(mtr_tr30 = "Left.Accumbens.area") %>% full_join(left_accumbens_area, .)
-left_accumbens_area <- mtr_tr50 %>% dplyr::select(participant_id, Left.Accumbens.area) %>%
-  rename(mtr_tr50 = "Left.Accumbens.area") %>% full_join(left_accumbens_area, .)
-
-left_accumbens_area <- set_label(left_accumbens_area,
-                           fit_NDI = "NDI",
-                           fit_FWF = "FWF",
-                           fit_ODI = "ODI",
-                           dti_fa = "FA",
-                           dti_md = "MD",
-                           dki_kfa = "KFA",
-                           dki_mk = "MK",
-                           mtr_tr30 = "MTR TR=30ms",
-                           mtr_tr50 = "MTR TR=50ms"
-)
 
 ##models 
-left_putamen_FWF_by_volume_age_sex_income_education <- 
-  lm(volume ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_volume_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_volume_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_volume_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_volume_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "Mean Left Putamen FWF and Volume, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** volume p < 0.001",
-      "volume p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_NDI_age_sex_income_education <- 
-  lm(fit_NDI ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_NDI_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_NDI_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_NDI_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_NDI_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "A. Mean Left Putamen FWF and NDI, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** model p < 0.001",
-      "\\* NDI p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> * group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_ODI_age_sex_income_education <- 
-  lm(fit_ODI ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_ODI_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_ODI_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_ODI_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_ODI_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "B. Mean Left Putamen FWF and ODI, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** ODI p < 0.001",
-      "ODI p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> * group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_FA_age_sex_income_education <- 
-  lm(dti_fa ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_FA_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_FA_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_FA_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_FA_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "C. Mean Left Putamen FWF and FA, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** FA p < 0.001",
-      # "* FA p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_MD_age_sex_income_education <- 
-  lm(dti_md ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_MD_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_MD_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_MD_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_MD_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Putamen FWF and MD, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** MD p < 0.001",
-      # "* MD p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> \\* group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_KFA_age_sex_income_education <- 
-  lm(dki_kfa ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_KFA_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_KFA_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_KFA_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_KFA_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "E. Mean Left Putamen FWF and KFA, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** KFA p < 0.001",
-      # "* KFA p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_MK_age_sex_income_education <- 
-  lm(dki_mk ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_MK_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_MK_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_MK_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_MK_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "F. Mean Left Putamen FWF and MK, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** MK p < 0.001",
-      # "* MK p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> \\* group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_mtr_tr30_age_sex_income_education <- 
-  lm(mtr_tr30 ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_mtr_tr30_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_mtr_tr30_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_mtr_tr30_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_mtr_tr30_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "G. Mean Left Putamen FWF and MTR TR=30ms, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** MTR TR=30ms p < 0.001",
-      "\\* MTR TR=30ms p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_mtr_tr50_age_sex_income_education <- 
-  lm(mtr_tr50 ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_mtr_tr50_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_mtr_tr50_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_mtr_tr50_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_mtr_tr50_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "H. Mean Left Putamen FWF and MTR TR=50ms, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** MTR TR=50ms p < 0.001",
-      "MTR TR=50ms p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
 left_amygdala_KFA_by_volume_age_sex_income_education <- 
   lm(volume ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
      left_amygdala)
@@ -1059,407 +795,7 @@ plot(pr, show_data = T, dot_alpha = 1) +
         plot.subtitle = element_markdown(hjust = 0.5),
         legend.title=element_blank())
 
-left_accumbens_area_KFA_by_volume_age_sex_income_education <- 
-  lm(volume ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_volume_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_volume_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_volume_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_volume_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "A. Mean Left Accumbens Area KFA and Volume, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** volume p < 0.001",
-      "volume p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> * group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_FWF_age_sex_income_education <- 
-  lm(fit_FWF ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_FWF_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_FWF_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_FWF_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_FWF_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "A. Mean Left Accumbens Area KFA and FWF, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** FWF p < 0.001",
-      # "FWF p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_NDI_age_sex_income_education <- 
-  lm(fit_NDI ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_NDI_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_NDI_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_NDI_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_NDI_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "B. Mean Left Accumbens Area KFA and NDI, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** model p < 0.001",
-      "** NDI p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_ODI_age_sex_income_education <- 
-  lm(fit_ODI ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_ODI_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_ODI_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_ODI_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_ODI_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "B. Mean Left Accumbens Area KFA and ODI, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** ODI p < 0.001",
-      "ODI p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_FA_age_sex_income_education <- 
-  lm(dti_fa ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_FA_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_FA_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_FA_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_FA_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "C. Mean Left Accumbens Area KFA and FA, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** FA p < 0.001",
-      # "FA p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_MD_age_sex_income_education <- 
-  lm(dti_md ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_MD_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_MD_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_MD_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_MD_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Accumbens Area KFA and MD, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** MD p < 0.001",
-      # "MD p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_MK_age_sex_income_education <- 
-  lm(dki_mk ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_MK_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_MK_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_MK_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_MK_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "E. Mean Left Accumbens Area KFA and MK, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** MK p < 0.001",
-      # "\\* MK p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_mtr_tr30_age_sex_income_education <- 
-  lm(mtr_tr30 ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_mtr_tr30_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_mtr_tr30_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_mtr_tr30_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_mtr_tr30_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "C. Mean Left Accumbens Area KFA and MTR TR=30ms, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** MTR TR=30ms p < 0.001",
-      "MTR TR=30ms p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_mtr_tr50_age_sex_income_education <- 
-  lm(mtr_tr50 ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_mtr_tr50_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_mtr_tr50_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_mtr_tr50_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_mtr_tr50_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = ". Mean Left Accumbens Area KFA and MTR TR=50ms, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** MTR TR=50ms p < 0.001",
-      "MTR TR=50ms p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_MK_by_volume_age_sex_income_education <- 
-  lm(volume ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_MK_by_volume_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_MK_by_volume_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_MK_by_volume_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_MK_by_volume_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "A. Mean Left Accumbens Area MK and Volume, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** volume p < 0.001",
-      "volume p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_MK_by_FWF_age_sex_income_education <- 
-  lm(fit_FWF ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_MK_by_FWF_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_MK_by_FWF_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_MK_by_FWF_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_MK_by_FWF_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "A. Mean Left Accumbens Area MK and FWF, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** FWF p < 0.001",
-      # "FWF p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> \\* group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_MK_by_NDI_age_sex_income_education <- 
-  lm(fit_NDI ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_MK_by_NDI_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_MK_by_NDI_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_MK_by_NDI_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_MK_by_NDI_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "B. Mean Left Accumbens Area MK and NDI, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** model p < 0.001",
-      # "** NDI p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_MK_by_ODI_age_sex_income_education <- 
-  lm(fit_ODI ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_MK_by_ODI_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_MK_by_ODI_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_MK_by_ODI_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_MK_by_ODI_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "C. Mean Left Accumbens Area MK and ODI, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** ODI p < 0.001",
-      " \\* ODI p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_MK_by_FA_age_sex_income_education <- 
-  lm(dti_fa ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_MK_by_FA_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_MK_by_FA_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_MK_by_FA_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_MK_by_FA_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "B. Mean Left Accumbens Area MK and FA, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** FA p < 0.001",
-      "FA p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_MK_by_MD_age_sex_income_education <- 
-  lm(dti_md ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_MK_by_MD_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_MK_by_MD_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_MK_by_MD_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_MK_by_MD_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Accumbens Area MK and MD, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** MD p < 0.001",
-      # "MD p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_MK_by_KFA_age_sex_income_education <- 
-  lm(dki_kfa ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_MK_by_KFA_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_MK_by_KFA_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_MK_by_KFA_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_MK_by_KFA_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "E. Mean Left Accumbens Area MK and KFA, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      "*** MK p < 0.001",
-      # "\\* MK p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_MK_by_mtr_tr30_age_sex_income_education <- 
-  lm(mtr_tr30 ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_MK_by_mtr_tr30_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_MK_by_mtr_tr30_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_MK_by_mtr_tr30_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_MK_by_mtr_tr30_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "C. Mean Left Accumbens Area MK and MTR TR=30ms, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** MTR TR=30ms p < 0.001",
-      "MTR TR=30ms p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_MK_by_mtr_tr50_age_sex_income_education <- 
-  lm(mtr_tr50 ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_MK_by_mtr_tr50_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_MK_by_mtr_tr50_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_MK_by_mtr_tr50_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_MK_by_mtr_tr50_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Accumbens Area MK and MTR TR=50ms, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** MTR TR=50ms p < 0.001",
-      "MTR TR=50ms p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-
 ### 3.3	Correlations of Significant Imaging Metrics with Memory, Anxiety, and Depression ###
-left_putamen_FWF_by_story_age_sex_income_education <- 
-  lm(homeint_storyrecall_d ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_story_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_story_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_story_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_story_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "A. Mean Left Putamen FWF and Memory, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** story p < 0.001",
-      "story p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> \\* group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_anxiety_age_sex_income_education <- 
-  lm(additional_hads_anxiety ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_anxiety_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_anxiety_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_anxiety_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_anxiety_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Putamen FWF and Anxiety, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** anxiety p < 0.001",
-      "anxiety p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_depression_age_sex_income_education <- 
-  lm(additional_hads_depression ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_depression_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_depression_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_depression_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_depression_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "B. Mean Left Putamen FWF and Depression, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** depression p < 0.001",
-      "\\* depression p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
 left_amygdala_KFA_by_story_age_sex_income_education <- 
   lm(homeint_storyrecall_d ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
      left_amygdala)
@@ -1574,198 +910,7 @@ plot(pr, show_data = T, dot_alpha = 1) +
         plot.subtitle = element_markdown(hjust = 0.5),
         legend.title=element_blank())
 
-left_accumbens_area_KFA_by_story_age_sex_income_education <- 
-  lm(homeint_storyrecall_d ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_story_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_story_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_story_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_story_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "C. Mean Left Accumbens Area KFA and Memory, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** story p < 0.001",
-      "story p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_anxiety_age_sex_income_education <- 
-  lm(additional_hads_anxiety ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_anxiety_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_anxiety_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_anxiety_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_anxiety_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Accumbens Area KFA and Anxiety, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** anxiety p < 0.001",
-      "anxiety p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_KFA_by_depression_age_sex_income_education <- 
-  lm(additional_hads_depression ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_KFA_by_depression_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_KFA_by_depression_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_KFA_by_depression_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_KFA_by_depression_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "G. Mean Left Accumbens Area KFA and Depression, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** depression p < 0.001",
-      "\\* depression p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> \\* group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_mk_by_story_age_sex_income_education <- 
-  lm(homeint_storyrecall_d ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_mk_by_story_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_mk_by_story_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_mk_by_story_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_mk_by_story_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Accumbens Area MK and Memory, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** story p < 0.001",
-      "story p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_mk_by_anxiety_age_sex_income_education <- 
-  lm(additional_hads_anxiety ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_mk_by_anxiety_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_mk_by_anxiety_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_mk_by_anxiety_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_mk_by_anxiety_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "H. Mean Left Accumbens Area MK and Anxiety, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** anxiety p < 0.001",
-      "anxiety p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_mk_by_depression_age_sex_income_education <- 
-  lm(additional_hads_depression ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_mk_by_depression_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_mk_by_depression_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_mk_by_depression_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_mk_by_depression_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "C. Mean Left Accumbens Area MK and Depression, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** depression p < 0.001",
-      "depression p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
 ### 3.4	Correlations of Significant Imaging Metrics with Measures of Cardiovascular Health ###
-left_putamen_FWF_by_bp_dia_age_sex_income_education <- 
-  lm(bp_dia_mean_cardio ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_bp_dia_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_bp_dia_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_bp_dia_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_bp_dia_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "A. Mean Left Putamen FWF and Diastolic BP, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** diastolic p < 0.001",
-      "\\* diastolic p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_bp_sys_age_sex_income_education <- 
-  lm(bp_sys_mean_cardio ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_bp_sys_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_bp_sys_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_bp_sys_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_bp_sys_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "A. Mean Left Putamen FWF and systolic BP, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** systolic p < 0.001",
-      "systolic p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_pulse_age_sex_income_education <- 
-  lm(pulse_mean_cardio ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_pulse_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_pulse_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_pulse_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_pulse_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "A. Mean Left Putamen FWF and Pulse, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** pulse p < 0.001",
-      "pulse p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_putamen_FWF_by_bmi_age_sex_income_education <- 
-  lm(bmi_cardio ~ fit_FWF * SCD + age + Sex + age_education_completed + Income,
-     left_putamen)
-corr_p_value <- summary(left_putamen_FWF_by_bmi_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_putamen_FWF_by_bmi_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_putamen_FWF_by_bmi_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_putamen_FWF_by_bmi_age_sex_income_education, c( "fit_FWF[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    y = BMI~(kg/m^2),
-    title = "E. Mean Left Putamen FWF and BMI, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** BMI p < 0.001",
-      "BMI p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
 left_amygdala_kfa_by_bp_dia_age_sex_income_education <- 
   lm(bp_dia_mean_cardio ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
      left_amygdala)
@@ -1919,743 +1064,3 @@ plot(pr, show_data = T, dot_alpha = 1) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5),
         legend.title=element_blank())
-
-left_accumbens_area_kfa_by_bp_dia_age_sex_income_education <- 
-  lm(bp_dia_mean_cardio ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_kfa_by_bp_dia_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_kfa_by_bp_dia_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_kfa_by_bp_dia_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_kfa_by_bp_dia_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "C. Mean Left Accumbens Area KFA and Diastolic BP, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** diastolic p < 0.001",
-      "diastolic p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_kfa_by_bp_sys_age_sex_income_education <- 
-  lm(bp_sys_mean_cardio ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_kfa_by_bp_sys_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_kfa_by_bp_sys_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_kfa_by_bp_sys_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_kfa_by_bp_sys_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Accumbens Area KFA and systolic BP, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** systolic p < 0.001",
-      "systolic p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_kfa_by_pulse_age_sex_income_education <- 
-  lm(pulse_mean_cardio ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_kfa_by_pulse_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_kfa_by_pulse_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_kfa_by_pulse_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_kfa_by_pulse_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Accumbens Area KFA and Pulse, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** pulse p < 0.001",
-      "pulse p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_kfa_by_bmi_age_sex_income_education <- 
-  lm(bmi_cardio ~ dki_kfa * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_kfa_by_bmi_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_kfa_by_bmi_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_kfa_by_bmi_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_kfa_by_bmi_age_sex_income_education, c( "dki_kfa[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    y = BMI~(kg/m^2),
-    title = "G. Mean Left Accumbens Area KFA and BMI, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** BMI p < 0.001",
-      "BMI p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_mk_by_bp_dia_age_sex_income_education <- 
-  lm(bp_dia_mean_cardio ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_mk_by_bp_dia_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_mk_by_bp_dia_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_mk_by_bp_dia_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_mk_by_bp_dia_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "D. Mean Left Accumbens Area MK and Diastolic BP, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** diastolic p < 0.001",
-      "diastolic p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_mk_by_bp_sys_age_sex_income_education <- 
-  lm(bp_sys_mean_cardio ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_mk_by_bp_sys_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_mk_by_bp_sys_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_mk_by_bp_sys_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_mk_by_bp_sys_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "E. Mean Left Accumbens Area MK and systolic BP, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** systolic p < 0.001",
-      "systolic p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_mk_by_pulse_age_sex_income_education <- 
-  lm(pulse_mean_cardio ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_mk_by_pulse_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_mk_by_pulse_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_mk_by_pulse_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_mk_by_pulse_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    title = "E. Mean Left Accumbens Area MK and Pulse, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** pulse p < 0.001",
-      "pulse p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-left_accumbens_area_mk_by_bmi_age_sex_income_education <- 
-  lm(bmi_cardio ~ dki_mk * SCD + age + Sex + age_education_completed + Income,
-     left_accumbens_area)
-corr_p_value <- summary(left_accumbens_area_mk_by_bmi_age_sex_income_education)$coefficients[2,4]
-adj_r_squared <- summary(left_accumbens_area_mk_by_bmi_age_sex_income_education)$adj.r.squared
-interaction_p <- summary(left_accumbens_area_mk_by_bmi_age_sex_income_education)$coefficients[12,4]
-pr <- predict_response(left_accumbens_area_mk_by_bmi_age_sex_income_education, c( "dki_mk[all]", "SCD"))
-plot(pr, show_data = T, dot_alpha = 1) + 
-  labs(
-    y = BMI~(kg/m^2),
-    title = "H. Mean Left Accumbens Area MK and BMI, \n Corrected by Age, Sex, Education, and Income",
-    subtitle = paste0(
-      # "*** BMI p < 0.001",
-      "BMI p = ", signif(corr_p_value, 2),
-      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2),
-      "<br> group interaction p = ", signif(interaction_p, 2))) +
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_markdown(hjust = 0.5),
-        legend.title=element_blank())
-
-########## cortical GM ####################
-failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
-               'sub-CC510438', #CTL abnormality in left frontal lobe
-               'sub-CC610308', #parietal lobe cutoff
-               'sub-CC610469', #parietal lobe cutoff
-               'sub-CC620466', #parietal lobe cutoff
-               'sub-CC620821', #SCD segmentation errors from large ventricles
-               'sub-CC621011', #CTL segmentation errors from large ventricles
-               'sub-CC621080', #SCD segmentation errors
-               'sub-CC710214', #parietal lobe cutoff
-               'sub-CC710551', #CTL motion artifacts in DWI
-               'sub-CC711027', #SCD severe motion artifacts in T1
-               'sub-CC712027', #parietal lobe cutoff
-               'sub-CC721434' #CTL segmentation errors from large ventricles
-)
-
-ctx_gm_exclude <- c("participant_id", "lh_AD_signature", "rh_AD_signature",
-                    "Left.Thalamus", "Right.Thalamus", "Left.Caudate", "Right.Caudate",
-                    "Left.Putamen", "Right.Putamen", "Left.Pallidum", "Right.Pallidum",
-                    "Left.Hippocampus", "Right.Hippocampus", "Left.Amygdala", "Right.Amygdala",
-                    "Left.Accumbens.area", "Right.Accumbens.area", "Left.VentralDC", "Right.VentralDC",
-                    "CC_Posterior", "CC_Mid_Posterior", "CC_Central", "CC_Mid_Anterior", "CC_Anterior")
-
-lh_AD_sig_thickness <- read_tsv("freesurfer/lh_AD_sig_thickness.tsv") %>%
-  rename(participant_id=`Measure:mean`, lh_AD_signature=Seg0001)
-lh_aparc_thickness = read_tsv("freesurfer/lh_aparctable_thickness.tsv") %>%
-  rename(participant_id=lh.aparc.thickness) %>%
-  select(!(lh_MeanThickness_thickness:eTIV))
-#import right aparc stats tables (cortical thickness and volume)
-rh_AD_sig_thickness <- read_tsv("freesurfer/rh_AD_sig_thickness.tsv") %>%
-  rename(participant_id=`Measure:mean`, rh_AD_signature=Seg0001)
-rh_aparc_thickness = read_tsv("freesurfer/rh_aparctable_thickness.tsv") %>%
-  rename(participant_id=rh.aparc.thickness) %>%
-  select(!(rh_MeanThickness_thickness:eTIV))
-#create aparc table
-thickness <- left_join(scd_status, lh_aparc_thickness) %>% #join left cortical thickness with SCD stats
-  left_join(., rh_aparc_thickness) %>% #add right cortical thickness
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  # mutate(across(where(is.double), remove_outliers)) %>%
-  rename_with(., ~ gsub("_", ".", .x, fixed = T), ends_with("thickness")) %>%
-  rename_with(., ~ paste0("ctx.", .x, recycle0 = T), ends_with("thickness")) %>%
-  rename_with(., ~ gsub(".thickness", "", .x, fixed = T)) #%>%
-# left_join(., lh_AD_sig_thickness) %>%
-# left_join(., rh_AD_sig_thickness)
-ctx_gm_thickness_table <- thickness %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-for (i in 1:length(AD_sig2meas_files)) {
-  assign(gsub(".tsv", "", 
-              gsub("freesurfer.", "", make.names(AD_sig2meas_files[i]))), 
-         read.delim(AD_sig2meas_files[i]))
-}
-
-fit_FWF <- aseg2fit_FWF %>%
-  left_join(., lh_AD_sig2fit_FWF) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2fit_FWF) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-
-ctx_gm_FWF_table <- fit_FWF %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-fit_NDI <- aseg2fit_NDI %>%
-  left_join(., lh_AD_sig2fit_NDI) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2fit_NDI) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-
-ctx_gm_NDI_table <- fit_NDI %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-fit_ODI <- aseg2fit_ODI %>%
-  left_join(., lh_AD_sig2fit_ODI) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2fit_ODI) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-
-ctx_gm_ODI_table <- fit_ODI %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-dti_fa <- aseg2dti_fa %>%
-  left_join(., lh_AD_sig2dti_fa) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2dti_fa) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-
-ctx_gm_fa_table <- dti_fa %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-dti_md <- aseg2dti_md %>%
-  left_join(., lh_AD_sig2dti_md) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2dti_md) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-
-ctx_gm_md_table <- dti_md %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-dti_rd <- aseg2dti_rd %>%
-  left_join(., lh_AD_sig2dti_rd) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2dti_rd) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  left_join(scd_status, .) 
-ctx_gm_rd_table <- dti_rd %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-dti_ad <- aseg2dti_ad %>%
-  left_join(., lh_AD_sig2dti_ad) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2dti_ad) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  left_join(scd_status, .) 
-ctx_gm_ad_table <- dti_ad %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-dki_kfa <- aseg2dki_kfa %>%
-  left_join(., lh_AD_sig2dki_kfa) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2dki_kfa) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-
-ctx_gm_kfa_table <- dki_kfa %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-dki_mk <- aseg2dki_mk %>%
-  left_join(., lh_AD_sig2dki_mk) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2dki_mk) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-ctx_gm_mk_table <- dki_mk %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-dki_rk <- aseg2dki_rk %>%
-  left_join(., lh_AD_sig2dki_rk) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2dki_rk) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  left_join(., jhu2dki_rk) %>%
-  rename(any_of(jhu_lookup)) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-ctx_gm_rk_table <- dki_rk %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-dki_ak <- aseg2dki_ak %>%
-  left_join(., lh_AD_sig2dki_ak) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2dki_ak) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  left_join(., jhu2dki_ak) %>%
-  rename(any_of(jhu_lookup)) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  left_join(scd_status, .)
-ctx_gm_ak_table <- dki_ak %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-mtr_tr30 <- aseg2mtr %>%
-  left_join(., lh_AD_sig2mtr) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2mtr) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-filter(mt_tr=="TR=30ms")
-ctx_gm_mtr_tr30_table <- mtr_tr30 %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")  
-mtr_tr50 <- aseg2mtr %>%
-  left_join(., lh_AD_sig2mtr) %>%
-  rename(lh_AD_signature = AD_signature) %>%
-  left_join(., rh_AD_sig2mtr) %>%
-  rename(rh_AD_signature = AD_signature) %>%
-  rename(participant_id = Measure.mean) %>%
-  left_join(scd_status, .) %>%
-  mutate(across(where(is.double), remove_outliers)) #remove outliers (change to NA)
-filter(mt_tr=="TR=50ms")
-
-ctx_gm_mtr_tr50_table <- mtr_tr50 %>% 
-  select(SCD, ctx.lh.bankssts:ctx.rh.insula) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",               
-              missing = "no"
-              # missing_text = "Excluded Outliers"
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p(q=T) %>% filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-#### focus on MTL ####
-left_amygdala %>% 
-  select(-participant_id) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Left Amygdala </div>")
-
-right_amygdala %>% 
-  select(-participant_id) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Right Amygdala </div>")
-
-scd_status <- dwi_over_55 %>% select(participant_id, SCD, mt_tr, Income, 
-                                     Ethnicity, Sex, age, age_education_completed,
-                                     homeint_storyrecall_d, bp_dia_mean_cardio, 
-                                     bp_sys_mean_cardio, pulse_mean_cardio,
-                                     height_cardio, weight_cardio,
-                                     additional_hads_anxiety, additional_hads_depression) %>%
-  filter(!participant_id %in% failed_qc) %>%
-  mutate(bmi_cardio = weight_cardio / (height_cardio/100)^2) %>%
-  select(!height_cardio, !weight_cardio)
-scd_status$additional_hads_depression[scd_status$additional_hads_depression > 21] <- NA
-
-aseg <- read_tsv("freesurfer/asegtable.tsv") %>%
-  rename(participant_id=`Measure:volume`)
-names(aseg) <- make.names(names(aseg))
-aparc2meas_files <- list.files(path = "freesurfer", 
-                               pattern = "aparc.*aseg.*\\.*tsv", 
-                               full.names = T)
-
-for (i in 1:length(aparc2meas_files)) {
-  assign(gsub(".tsv", "", 
-              gsub("freesurfer.aparc.", "", make.names(aparc2meas_files[i]))), 
-         read.delim(aparc2meas_files[i]))
-}
-
-scd_status <- dwi_over_55 %>% select(participant_id, SCD, mt_tr, Income, 
-                                     Ethnicity, Sex, age, age_education_completed,
-                                     homeint_storyrecall_d, bp_dia_mean_cardio, 
-                                     bp_sys_mean_cardio, pulse_mean_cardio,
-                                     height_cardio, weight_cardio,
-                                     additional_hads_anxiety, additional_hads_depression) %>%
-  filter(!participant_id %in% failed_qc) %>%
-  mutate(bmi_cardio = weight_cardio / (height_cardio/100)^2) %>%
-  select(-height_cardio, -weight_cardio)
-scd_status$additional_hads_depression[scd_status$additional_hads_depression > 21] <- NA
-
-volumes <- left_join(scd_status, aseg) %>% #join volumes with SCD status
-  mutate(across(c(Left.Lateral.Ventricle:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename(Left.Cerebral.White.Matter	= lhCerebralWhiteMatterVol, 
-         Right.Cerebral.White.Matter	= rhCerebralWhiteMatterVol) %>%
-  select(!c((BrainSegVol:CortexVol), (CerebralWhiteMatterVol:EstimatedTotalIntraCranialVol)))
-
-mtl_imaging <- aseg %>% 
-  mutate(across(c(Left.Lateral.Ventricle:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_volume"), !participant_id)
-mtl_imaging <- aseg2dki_ak %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  rename_with(~paste0(., "_AK"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dki_kfa %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_KFA"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dki_mk %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  rename_with(~paste0(., "_MK"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dki_mkt %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  rename_with(~paste0(., "_MKT"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dki_rk %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  rename_with(~paste0(., "_RK"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dti_ad %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_AxD"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dti_fa %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_FA"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dti_md %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_MD"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dti_rd %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_RD"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2fit_FWF %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Correia et al.)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 0.7, NA))) %>%
-  rename_with(~paste0(., "_FWF"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2fit_NDI %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_NDI"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2fit_ODI %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Correia et al.)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 0.8, NA))) %>%
-  rename_with(~paste0(., "_ODI"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2mtr %>%
-  rename(participant_id = Measure.mean) %>%
-  left_join(scd_status, .) %>%
-  filter(mt_tr=="TR=30ms") %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_MTR_TR30"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2mtr %>%
-  rename(participant_id = Measure.mean) %>%
-  left_join(scd_status, .) %>%
-  filter(mt_tr=="TR=50ms") %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_MTR_TR50"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-
-
-#across groups
-mtl_imaging_across_groups <- scd_status %>%
-  select(participant_id, age, age_education_completed, 
-         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
-         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
-  left_join(., mtl_imaging)
-mtl_imaging_matrix <- mtl_imaging_across_groups %>% select(Left.Amygdala_volume:ncol(.))
-scd_status_matrix <- mtl_imaging_across_groups %>% select(age:additional_hads_depression)
-corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
-                                adjust = "fdr")
-corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
-                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
-
-#scd only
-mtl_imaging_scd <- scd_status %>%
-  dplyr::filter(SCD == "SCD") %>%
-  select(participant_id, age, age_education_completed, 
-         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
-         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
-  left_join(., mtl_imaging)
-mtl_imaging_matrix <- mtl_imaging_scd %>% select(Left.Amygdala_volume:ncol(.))
-scd_status_matrix <- mtl_imaging_scd %>% select(age:additional_hads_depression)
-corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
-                                adjust = "fdr")
-corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
-                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
-
-#control only
-mtl_imaging_control <- scd_status %>%
-  dplyr::filter(SCD == "Control") %>%
-  select(participant_id, age, age_education_completed, 
-         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
-         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
-  left_join(., mtl_imaging)
-mtl_imaging_matrix <- mtl_imaging_control %>% select(Left.Amygdala_volume:ncol(.))
-scd_status_matrix <- mtl_imaging_control %>% select(age:additional_hads_depression)
-corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
-                                adjust = "fdr")
-corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
-                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
-
-mtl_imaging <- left_join(scd_status, mtl_imaging)
-mtl_imaging %>%
-  select(-participant_id) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(Left.Amygdala_MK, Left.Amygdala_RK, Left.Amygdala_KFA, Left.Amygdala_AK)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
