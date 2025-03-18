@@ -97,23 +97,6 @@ scd_status %>% select(SCD, homeint_storyrecall_d, additional_hads_anxiety, addit
                  Group differences in memory, anxiety, and depression scores. HADS: Hospital Anxiety and Depression
                  Scale. SCD: Subjective Cognitive Decline. SD: Standard Deviation.</div>")
 
-#cardiovascular health table
-scd_status %>% select(SCD, bp_sys_mean_cardio, bp_dia_mean_cardio, pulse_mean_cardio, bmi_cardio) %>%
-  filter(!is.na(bmi_cardio)) %>%
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})") %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% bold_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "",
-                estimate ~ "**Effect Size**") %>%
-  bold_labels() %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Table 3:</div> <div style='text-align: left'> 
-                 Group differences in cardiovascular health measures. 
-                 SCD: Subjective Cognitive Decline. BMI: Body Mass Index. SD: Standard Deviation.</div>") %>%
-  as_gt() %>%
-  gt::fmt_markdown(columns = vars(label))
-
 #import aseg stats table (subcortical volumes)
 aseg <- read_tsv("freesurfer/asegtable_gm.tsv") %>%
   rename(participant_id=`Measure:volume`)
@@ -322,6 +305,8 @@ right_amygdala %>%
                 estimate ~ "**Effect Size**") %>%
   modify_caption("<div style='text-align: left; font-weight: bold;'> Right Amygdala </div>")
 
+##### Scatterplots of Linear Models for significant diffusion measures ####
+##### Pearson and Spearman Tables for significant diffusion measures ######
 #across groups
 scd_status_matrix <- scd_status %>% select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
 left_imaging_matrix <- left_amygdala %>% 
