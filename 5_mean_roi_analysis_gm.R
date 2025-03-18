@@ -1,4 +1,6 @@
 source("1_data_preparation_gm.R")
+library(tidyverse)
+library(labelVector)
 library(gtsummary)
 library(ggeffects)
 library(ggtext)
@@ -196,195 +198,7 @@ mtr_tr50 <- aseg2mtr %>%
   filter(mt_tr=="TR=50ms")
 
 
-#### focus on MTL ####
-left_amygdala %>% 
-  select(-participant_id) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Left Amygdala </div>")
-
-right_amygdala %>% 
-  select(-participant_id) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**") %>%
-  modify_caption("<div style='text-align: left; font-weight: bold;'> Right Amygdala </div>")
-
-mtl_imaging <- aseg %>% 
-  mutate(across(c(Left.Lateral.Ventricle:ncol(.)), .fns = ~.*1000/EstimatedTotalIntraCranialVol)) %>% #normalize by intracranial volume
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_volume"), !participant_id)
-mtl_imaging <- aseg2dki_ak %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  rename_with(~paste0(., "_AK"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dki_kfa %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_KFA"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dki_mk %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  rename_with(~paste0(., "_MK"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dki_mkt %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  rename_with(~paste0(., "_MKT"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dki_rk %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Veraat, Hecke, and Sijbers 2011)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 4, NA))) %>%
-  rename_with(~paste0(., "_RK"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dti_ad %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_AxD"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dti_fa %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_FA"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dti_md %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_MD"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2dti_rd %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_RD"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2fit_FWF %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Correia et al.)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 0.7, NA))) %>%
-  rename_with(~paste0(., "_FWF"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2fit_NDI %>%
-  rename(participant_id = Measure.mean) %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_NDI"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2fit_ODI %>%
-  rename(participant_id = Measure.mean) %>%
-  #remove biologically implausible values (Correia et al.)
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  mutate(across(where(is.double), ~ replace(., . > 0.8, NA))) %>%
-  rename_with(~paste0(., "_ODI"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2mtr %>%
-  rename(participant_id = Measure.mean) %>%
-  left_join(scd_status, .) %>%
-  filter(mt_tr=="TR=30ms") %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_MTR_TR30"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-mtl_imaging <- aseg2mtr %>%
-  rename(participant_id = Measure.mean) %>%
-  left_join(scd_status, .) %>%
-  filter(mt_tr=="TR=50ms") %>%
-  select(participant_id, Left.Amygdala, Left.Hippocampus, Right.Amygdala, Right.Hippocampus) %>%
-  mutate(across(where(is.double), ~ replace(., . < 0, NA))) %>%
-  rename_with(~paste0(., "_MTR_TR50"), !participant_id) %>%
-  left_join(mtl_imaging, .)
-
-
-#across groups
-mtl_imaging_across_groups <- scd_status %>%
-  select(participant_id, age, age_education_completed, 
-         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
-         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
-  left_join(., mtl_imaging)
-mtl_imaging_matrix <- mtl_imaging_across_groups %>% select(Left.Amygdala_volume:ncol(.))
-scd_status_matrix <- mtl_imaging_across_groups %>% select(age:additional_hads_depression)
-corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
-                                adjust = "fdr")
-corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
-                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
-
-#scd only
-mtl_imaging_scd <- scd_status %>%
-  dplyr::filter(SCD == "SCD") %>%
-  select(participant_id, age, age_education_completed, 
-         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
-         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
-  left_join(., mtl_imaging)
-mtl_imaging_matrix <- mtl_imaging_scd %>% select(Left.Amygdala_volume:ncol(.))
-scd_status_matrix <- mtl_imaging_scd %>% select(age:additional_hads_depression)
-corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
-                                adjust = "fdr")
-corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
-                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
-
-#control only
-mtl_imaging_control <- scd_status %>%
-  dplyr::filter(SCD == "Control") %>%
-  select(participant_id, age, age_education_completed, 
-         bp_dia_mean_cardio, bp_sys_mean_cardio, pulse_mean_cardio, bmi_cardio,
-         homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
-  left_join(., mtl_imaging)
-mtl_imaging_matrix <- mtl_imaging_control %>% select(Left.Amygdala_volume:ncol(.))
-scd_status_matrix <- mtl_imaging_control %>% select(age:additional_hads_depression)
-corr_matrix <- psych::corr.test(scd_status_matrix, mtl_imaging_matrix, use = "pairwise.complete.obs", 
-                                adjust = "fdr")
-corrplot::corrplot(corr_matrix$r, p.mat = corr_matrix$p.adj, method = 'color',
-                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.7)
-
-mtl_imaging <- left_join(scd_status, mtl_imaging)
-mtl_imaging %>%
-  select(-participant_id) %>% 
-  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(Left.Amygdala_MK, Left.Amygdala_RK, Left.Amygdala_KFA, Left.Amygdala_AK)
-  ) %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "**Region of Interest**",
-                estimate ~ "**Effect Size**")
-
-### 3.2	Correlations Between Imaging Metrics ####
+#### focus on amygdala ####
 left_amygdala <- volumes %>% dplyr::select(participant_id:bmi_cardio, Left.Amygdala) %>%
   rename(volume = "Left.Amygdala")
 left_amygdala <- fit_NDI %>% dplyr::select(participant_id, Left.Amygdala) %>%
@@ -397,14 +211,23 @@ left_amygdala <- dti_fa %>% dplyr::select(participant_id, Left.Amygdala) %>%
   rename(dti_fa = "Left.Amygdala") %>% full_join(left_amygdala, .)
 left_amygdala <- dti_md %>% dplyr::select(participant_id, Left.Amygdala) %>%
   rename(dti_md = "Left.Amygdala") %>% full_join(left_amygdala, .)
+left_amygdala <- dti_ad %>% dplyr::select(participant_id, Left.Amygdala) %>%
+  rename(dti_ad = "Left.Amygdala") %>% full_join(left_amygdala, .)
+left_amygdala <- dti_rd %>% dplyr::select(participant_id, Left.Amygdala) %>%
+  rename(dti_rd = "Left.Amygdala") %>% full_join(left_amygdala, .)
 left_amygdala <- dki_kfa %>% dplyr::select(participant_id, Left.Amygdala) %>%
   rename(dki_kfa = "Left.Amygdala") %>% full_join(left_amygdala, .)
 left_amygdala <- dki_mk %>% dplyr::select(participant_id, Left.Amygdala) %>%
   rename(dki_mk = "Left.Amygdala") %>% full_join(left_amygdala, .)
-left_amygdala <- mtr_tr30 %>% dplyr::select(participant_id, Left.Amygdala) %>%
-  rename(mtr_tr30 = "Left.Amygdala") %>% full_join(left_amygdala, .)
-left_amygdala <- mtr_tr50 %>% dplyr::select(participant_id, Left.Amygdala) %>%
-  rename(mtr_tr50 = "Left.Amygdala") %>% full_join(left_amygdala, .)
+left_amygdala <- dki_ak %>% dplyr::select(participant_id, Left.Amygdala) %>%
+  rename(dki_ak = "Left.Amygdala") %>% full_join(left_amygdala, .)
+left_amygdala <- dki_rk %>% dplyr::select(participant_id, Left.Amygdala) %>%
+  rename(dki_rk = "Left.Amygdala") %>% full_join(left_amygdala, .)
+# left_amygdala <- mtr_tr30 %>% dplyr::select(participant_id, Left.Amygdala) %>%
+#   rename(mtr_tr30 = "Left.Amygdala") %>% full_join(left_amygdala, .)
+# left_amygdala <- mtr_tr50 %>% dplyr::select(participant_id, Left.Amygdala) %>%
+#   rename(mtr_tr50 = "Left.Amygdala") %>% full_join(left_amygdala, .)
+left_amygdala$region <- "Left Amygdala"
 
 left_amygdala <- set_label(left_amygdala,
                            fit_NDI = "NDI",
@@ -412,10 +235,14 @@ left_amygdala <- set_label(left_amygdala,
                            fit_ODI = "ODI",
                            dti_fa = "FA",
                            dti_md = "MD",
+                           dti_ad = "AxD",
+                           dti_rd = "RD",
                            dki_kfa = "KFA",
                            dki_mk = "MK",
-                           mtr_tr30 = "MTR TR=30ms",
-                           mtr_tr50 = "MTR TR=50ms"
+                           dki_ak = "AK",
+                           dki_rk = "RK"
+                           # mtr_tr30 = "MTR TR=30ms",
+                           # mtr_tr50 = "MTR TR=50ms"
 )
 
 right_amygdala <- volumes %>% dplyr::select(participant_id:bmi_cardio, Right.Amygdala) %>%
@@ -430,27 +257,381 @@ right_amygdala <- dti_fa %>% dplyr::select(participant_id, Right.Amygdala) %>%
   rename(dti_fa = "Right.Amygdala") %>% full_join(right_amygdala, .)
 right_amygdala <- dti_md %>% dplyr::select(participant_id, Right.Amygdala) %>%
   rename(dti_md = "Right.Amygdala") %>% full_join(right_amygdala, .)
+right_amygdala <- dti_ad %>% dplyr::select(participant_id, Right.Amygdala) %>%
+  rename(dti_ad = "Right.Amygdala") %>% full_join(right_amygdala, .)
+right_amygdala <- dti_rd %>% dplyr::select(participant_id, Right.Amygdala) %>%
+  rename(dti_rd = "Right.Amygdala") %>% full_join(right_amygdala, .)
 right_amygdala <- dki_kfa %>% dplyr::select(participant_id, Right.Amygdala) %>%
   rename(dki_kfa = "Right.Amygdala") %>% full_join(right_amygdala, .)
 right_amygdala <- dki_mk %>% dplyr::select(participant_id, Right.Amygdala) %>%
   rename(dki_mk = "Right.Amygdala") %>% full_join(right_amygdala, .)
-right_amygdala <- mtr_tr30 %>% dplyr::select(participant_id, Right.Amygdala) %>%
-  rename(mtr_tr30 = "Right.Amygdala") %>% full_join(right_amygdala, .)
-right_amygdala <- mtr_tr50 %>% dplyr::select(participant_id, Right.Amygdala) %>%
-  rename(mtr_tr50 = "Right.Amygdala") %>% full_join(right_amygdala, .)
+right_amygdala <- dki_ak %>% dplyr::select(participant_id, Right.Amygdala) %>%
+  rename(dki_ak = "Right.Amygdala") %>% full_join(right_amygdala, .)
+right_amygdala <- dki_rk %>% dplyr::select(participant_id, Right.Amygdala) %>%
+  rename(dki_rk = "Right.Amygdala") %>% full_join(right_amygdala, .)
+# right_amygdala <- mtr_tr30 %>% dplyr::select(participant_id, Right.Amygdala) %>%
+#   rename(mtr_tr30 = "Right.Amygdala") %>% full_join(right_amygdala, .)
+# right_amygdala <- mtr_tr50 %>% dplyr::select(participant_id, Right.Amygdala) %>%
+#   rename(mtr_tr50 = "Right.Amygdala") %>% full_join(right_amygdala, .)
 
+right_amygdala$region <- "Right Amygdala"
 right_amygdala <- set_label(right_amygdala,
-                            fit_NDI = "NDI",
-                            fit_FWF = "FWF",
-                            fit_ODI = "ODI",
-                            dti_fa = "FA",
-                            dti_md = "MD",
-                            dki_kfa = "KFA",
-                            dki_mk = "MK",
-                            mtr_tr30 = "MTR TR=30ms",
-                            mtr_tr50 = "MTR TR=50ms"
+                           fit_NDI = "NDI",
+                           fit_FWF = "FWF",
+                           fit_ODI = "ODI",
+                           dti_fa = "FA",
+                           dti_md = "MD",
+                           dti_ad = "AxD",
+                           dti_rd = "RD",
+                           dki_kfa = "KFA",
+                           dki_mk = "MK",
+                           dki_ak = "AK",
+                           dki_rk = "RK"
+                           # mtr_tr30 = "MTR TR=30ms",
+                           # mtr_tr50 = "MTR TR=50ms"
 )
 
+
+left_amygdala %>% 
+  select(-participant_id) %>% 
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
+              include = c(dti_fa, dti_md, dti_ad, dti_rd, 
+                          dki_kfa, dki_mk, dki_ak, dki_rk, 
+                          fit_FWF, fit_NDI, fit_ODI)
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**") %>%
+  modify_caption("<div style='text-align: left; font-weight: bold;'> Left Amygdala </div>")
+
+right_amygdala %>% 
+  select(-participant_id) %>% 
+  tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
+              include = c(dti_fa, dti_md, dti_ad, dti_rd, 
+                          dki_kfa, dki_mk, dki_ak, dki_rk, 
+                          fit_FWF, fit_NDI, fit_ODI)
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Region of Interest**",
+                estimate ~ "**Effect Size**") %>%
+  modify_caption("<div style='text-align: left; font-weight: bold;'> Right Amygdala </div>")
+
+#across groups
+scd_status_matrix <- scd_status %>% select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
+left_imaging_matrix <- left_amygdala %>% 
+  select(dti_fa, dti_rd, 
+         dki_kfa, fit_FWF)
+left_corr_matrix_pearson <- psych::corr.test(scd_status_matrix, left_imaging_matrix, use = "pairwise.complete.obs", 
+                                adjust = "fdr")
+left_corr_pearson <- as.data.frame(left_corr_matrix_pearson$r)
+left_corr_pearson <- tibble::rownames_to_column(left_corr_pearson, "behav_demo_metric")
+left_corr_pearson_long <- left_corr_pearson %>%
+  pivot_longer( cols = !behav_demo_metric,
+    names_to = "diffusion_metric", values_to = "Pearson")
+left_corr_pearson_p <- as.data.frame(left_corr_matrix_pearson$p)
+left_corr_pearson_p <- tibble::rownames_to_column(left_corr_pearson_p, "behav_demo_metric")
+left_corr_pearson_p_long <- left_corr_pearson_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson p value")
+left_corr_pearson_long <- left_join(left_corr_pearson_long, left_corr_pearson_p_long)
+left_corr_pearson_p_adj <- as.data.frame(left_corr_matrix_pearson$p.adj)
+left_corr_pearson_p_adj <- tibble::rownames_to_column(left_corr_pearson_p_adj, "behav_demo_metric")
+left_corr_pearson_p_adj_long <- left_corr_pearson_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson q value")
+left_corr_pearson_long <- left_join(left_corr_pearson_long, left_corr_pearson_p_adj_long)
+
+left_corr_matrix_spearman <- psych::corr.test(scd_status_matrix, left_imaging_matrix, use = "pairwise.complete.obs",
+                                              method = "spearman", adjust = "fdr")
+left_corr_spearman <- as.data.frame(left_corr_matrix_spearman$r)
+left_corr_spearman <- tibble::rownames_to_column(left_corr_spearman, "behav_demo_metric")
+left_corr_spearman_long <- left_corr_spearman %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman")
+left_corr_spearman_p <- as.data.frame(left_corr_matrix_spearman$p)
+left_corr_spearman_p <- tibble::rownames_to_column(left_corr_spearman_p, "behav_demo_metric")
+left_corr_spearman_p_long <- left_corr_spearman_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman p value")
+left_corr_spearman_long <- left_join(left_corr_spearman_long, left_corr_spearman_p_long)
+left_corr_spearman_p_adj <- as.data.frame(left_corr_matrix_spearman$p.adj)
+left_corr_spearman_p_adj <- tibble::rownames_to_column(left_corr_spearman_p_adj, "behav_demo_metric")
+left_corr_spearman_p_adj_long <- left_corr_spearman_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman q value")
+left_corr_spearman_long <- left_join(left_corr_spearman_long, left_corr_spearman_p_adj_long)
+
+left_corr <- left_join(left_corr_pearson_long, left_corr_spearman_long)
+tinytable::tt(left_corr, digits = 2, caption = "Left Amygdala Across Groups")
+
+corrplot::corrplot(right_corr_matrix_spearman$r, p.mat = right_corr_matrix_spearman$p, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.9)
+
+scd_status_matrix <- scd_status %>% select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
+right_imaging_matrix <- right_amygdala %>% 
+  select(dki_kfa, dki_rk)
+right_corr_matrix_pearson <- psych::corr.test(scd_status_matrix, right_imaging_matrix, use = "pairwise.complete.obs", 
+                                             adjust = "fdr")
+right_corr_pearson <- as.data.frame(right_corr_matrix_pearson$r)
+right_corr_pearson <- tibble::rownames_to_column(right_corr_pearson, "behav_demo_metric")
+right_corr_pearson_long <- right_corr_pearson %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson")
+right_corr_pearson_p <- as.data.frame(right_corr_matrix_pearson$p)
+right_corr_pearson_p <- tibble::rownames_to_column(right_corr_pearson_p, "behav_demo_metric")
+right_corr_pearson_p_long <- right_corr_pearson_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson p value")
+right_corr_pearson_long <- right_join(right_corr_pearson_long, right_corr_pearson_p_long)
+right_corr_pearson_p_adj <- as.data.frame(right_corr_matrix_pearson$p.adj)
+right_corr_pearson_p_adj <- tibble::rownames_to_column(right_corr_pearson_p_adj, "behav_demo_metric")
+right_corr_pearson_p_adj_long <- right_corr_pearson_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson q value")
+right_corr_pearson_long <- right_join(right_corr_pearson_long, right_corr_pearson_p_adj_long)
+
+right_corr_matrix_spearman <- psych::corr.test(scd_status_matrix, right_imaging_matrix, use = "pairwise.complete.obs",
+                                              method = "spearman", adjust = "fdr")
+right_corr_spearman <- as.data.frame(right_corr_matrix_spearman$r)
+right_corr_spearman <- tibble::rownames_to_column(right_corr_spearman, "behav_demo_metric")
+right_corr_spearman_long <- right_corr_spearman %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman")
+right_corr_spearman_p <- as.data.frame(right_corr_matrix_spearman$p)
+right_corr_spearman_p <- tibble::rownames_to_column(right_corr_spearman_p, "behav_demo_metric")
+right_corr_spearman_p_long <- right_corr_spearman_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman p value")
+right_corr_spearman_long <- right_join(right_corr_spearman_long, right_corr_spearman_p_long)
+right_corr_spearman_p_adj <- as.data.frame(right_corr_matrix_spearman$p.adj)
+right_corr_spearman_p_adj <- tibble::rownames_to_column(right_corr_spearman_p_adj, "behav_demo_metric")
+right_corr_spearman_p_adj_long <- right_corr_spearman_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman q value")
+right_corr_spearman_long <- right_join(right_corr_spearman_long, right_corr_spearman_p_adj_long)
+
+right_corr <- right_join(right_corr_pearson_long, right_corr_spearman_long)
+tinytable::tt(right_corr, digits = 2, caption = "right Amygdala Across Groups")
+
+corrplot::corrplot(right_corr_matrix_spearman$r, p.mat = right_corr_matrix_spearman$p, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.9)
+
+#scd_only
+scd_status_matrix <- scd_status %>% 
+  filter(SCD == "SCD") %>%
+  select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
+left_imaging_matrix <- left_amygdala %>% 
+  filter(SCD == "SCD") %>%
+  select(dti_fa, dti_rd, 
+         dki_kfa, fit_FWF)
+left_corr_matrix_pearson <- psych::corr.test(scd_status_matrix, left_imaging_matrix, use = "pairwise.complete.obs", 
+                                             adjust = "fdr")
+left_corr_pearson <- as.data.frame(left_corr_matrix_pearson$r)
+left_corr_pearson <- tibble::rownames_to_column(left_corr_pearson, "behav_demo_metric")
+left_corr_pearson_long <- left_corr_pearson %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson")
+left_corr_pearson_p <- as.data.frame(left_corr_matrix_pearson$p)
+left_corr_pearson_p <- tibble::rownames_to_column(left_corr_pearson_p, "behav_demo_metric")
+left_corr_pearson_p_long <- left_corr_pearson_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson p value")
+left_corr_pearson_long <- left_join(left_corr_pearson_long, left_corr_pearson_p_long)
+left_corr_pearson_p_adj <- as.data.frame(left_corr_matrix_pearson$p.adj)
+left_corr_pearson_p_adj <- tibble::rownames_to_column(left_corr_pearson_p_adj, "behav_demo_metric")
+left_corr_pearson_p_adj_long <- left_corr_pearson_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson q value")
+left_corr_pearson_long <- left_join(left_corr_pearson_long, left_corr_pearson_p_adj_long)
+
+
+left_corr_matrix_spearman <- psych::corr.test(scd_status_matrix, left_imaging_matrix, use = "pairwise.complete.obs",
+                                              method = "spearman", adjust = "fdr")
+left_corr_spearman <- as.data.frame(left_corr_matrix_spearman$r)
+left_corr_spearman <- tibble::rownames_to_column(left_corr_spearman, "behav_demo_metric")
+left_corr_spearman_long <- left_corr_spearman %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman")
+left_corr_spearman_p <- as.data.frame(left_corr_matrix_spearman$p)
+left_corr_spearman_p <- tibble::rownames_to_column(left_corr_spearman_p, "behav_demo_metric")
+left_corr_spearman_p_long <- left_corr_spearman_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman p value")
+left_corr_spearman_long <- left_join(left_corr_spearman_long, left_corr_spearman_p_long)
+left_corr_spearman_p_adj <- as.data.frame(left_corr_matrix_spearman$p.adj)
+left_corr_spearman_p_adj <- tibble::rownames_to_column(left_corr_spearman_p_adj, "behav_demo_metric")
+left_corr_spearman_p_adj_long <- left_corr_spearman_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman q value")
+left_corr_spearman_long <- left_join(left_corr_spearman_long, left_corr_spearman_p_adj_long)
+
+left_corr <- left_join(left_corr_pearson_long, left_corr_spearman_long)
+tinytable::tt(left_corr, digits = 2, caption = "Left Amygdala SCD")
+
+scd_status_matrix <- scd_status %>% 
+  filter(SCD == "SCD") %>%
+  select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
+right_imaging_matrix <- right_amygdala %>% 
+  filter(SCD == "SCD") %>%
+  select(dki_kfa, dki_rk)
+right_corr_matrix_pearson <- psych::corr.test(scd_status_matrix, right_imaging_matrix, use = "pairwise.complete.obs", 
+                                             adjust = "fdr")
+right_corr_pearson <- as.data.frame(right_corr_matrix_pearson$r)
+right_corr_pearson <- tibble::rownames_to_column(right_corr_pearson, "behav_demo_metric")
+right_corr_pearson_long <- right_corr_pearson %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson")
+right_corr_pearson_p <- as.data.frame(right_corr_matrix_pearson$p)
+right_corr_pearson_p <- tibble::rownames_to_column(right_corr_pearson_p, "behav_demo_metric")
+right_corr_pearson_p_long <- right_corr_pearson_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson p value")
+right_corr_pearson_long <- right_join(right_corr_pearson_long, right_corr_pearson_p_long)
+right_corr_pearson_p_adj <- as.data.frame(right_corr_matrix_pearson$p.adj)
+right_corr_pearson_p_adj <- tibble::rownames_to_column(right_corr_pearson_p_adj, "behav_demo_metric")
+right_corr_pearson_p_adj_long <- right_corr_pearson_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson q value")
+right_corr_pearson_long <- right_join(right_corr_pearson_long, right_corr_pearson_p_adj_long)
+
+
+right_corr_matrix_spearman <- psych::corr.test(scd_status_matrix, right_imaging_matrix, use = "pairwise.complete.obs",
+                                              method = "spearman", adjust = "fdr")
+right_corr_spearman <- as.data.frame(right_corr_matrix_spearman$r)
+right_corr_spearman <- tibble::rownames_to_column(right_corr_spearman, "behav_demo_metric")
+right_corr_spearman_long <- right_corr_spearman %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman")
+right_corr_spearman_p <- as.data.frame(right_corr_matrix_spearman$p)
+right_corr_spearman_p <- tibble::rownames_to_column(right_corr_spearman_p, "behav_demo_metric")
+right_corr_spearman_p_long <- right_corr_spearman_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman p value")
+right_corr_spearman_long <- right_join(right_corr_spearman_long, right_corr_spearman_p_long)
+right_corr_spearman_p_adj <- as.data.frame(right_corr_matrix_spearman$p.adj)
+right_corr_spearman_p_adj <- tibble::rownames_to_column(right_corr_spearman_p_adj, "behav_demo_metric")
+right_corr_spearman_p_adj_long <- right_corr_spearman_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman q value")
+right_corr_spearman_long <- right_join(right_corr_spearman_long, right_corr_spearman_p_adj_long)
+
+right_corr <- right_join(right_corr_pearson_long, right_corr_spearman_long)
+tinytable::tt(right_corr, digits = 2, caption = "right Amygdala SCD")
+
+#ctl_only
+scd_status_matrix <- scd_status %>% 
+  filter(SCD == "Control") %>%
+  select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
+left_imaging_matrix <- left_amygdala %>% 
+  filter(SCD == "Control") %>%
+  select(dti_fa, dti_rd, 
+         dki_kfa, fit_FWF)
+left_corr_matrix_pearson <- psych::corr.test(scd_status_matrix, left_imaging_matrix, use = "pairwise.complete.obs", 
+                                             adjust = "fdr")
+left_corr_pearson <- as.data.frame(left_corr_matrix_pearson$r)
+left_corr_pearson <- tibble::rownames_to_column(left_corr_pearson, "behav_demo_metric")
+left_corr_pearson_long <- left_corr_pearson %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson")
+left_corr_pearson_p <- as.data.frame(left_corr_matrix_pearson$p)
+left_corr_pearson_p <- tibble::rownames_to_column(left_corr_pearson_p, "behav_demo_metric")
+left_corr_pearson_p_long <- left_corr_pearson_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson p value")
+left_corr_pearson_long <- left_join(left_corr_pearson_long, left_corr_pearson_p_long)
+left_corr_pearson_p_adj <- as.data.frame(left_corr_matrix_pearson$p.adj)
+left_corr_pearson_p_adj <- tibble::rownames_to_column(left_corr_pearson_p_adj, "behav_demo_metric")
+left_corr_pearson_p_adj_long <- left_corr_pearson_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson q value")
+left_corr_pearson_long <- left_join(left_corr_pearson_long, left_corr_pearson_p_adj_long)
+
+left_corr_matrix_spearman <- psych::corr.test(scd_status_matrix, left_imaging_matrix, use = "pairwise.complete.obs",
+                                              method = "spearman", adjust = "fdr")
+left_corr_spearman <- as.data.frame(left_corr_matrix_spearman$r)
+left_corr_spearman <- tibble::rownames_to_column(left_corr_spearman, "behav_demo_metric")
+left_corr_spearman_long <- left_corr_spearman %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman")
+left_corr_spearman_p <- as.data.frame(left_corr_matrix_spearman$p)
+left_corr_spearman_p <- tibble::rownames_to_column(left_corr_spearman_p, "behav_demo_metric")
+left_corr_spearman_p_long <- left_corr_spearman_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman p value")
+left_corr_spearman_long <- left_join(left_corr_spearman_long, left_corr_spearman_p_long)
+left_corr_spearman_p_adj <- as.data.frame(left_corr_matrix_spearman$p.adj)
+left_corr_spearman_p_adj <- tibble::rownames_to_column(left_corr_spearman_p_adj, "behav_demo_metric")
+left_corr_spearman_p_adj_long <- left_corr_spearman_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman q value")
+left_corr_spearman_long <- left_join(left_corr_spearman_long, left_corr_spearman_p_adj_long)
+
+left_corr <- left_join(left_corr_pearson_long, left_corr_spearman_long)
+tinytable::tt(left_corr, digits = 2, caption = "Left Amygdala Control")
+
+corrplot::corrplot(left_corr_matrix_spearman$r, p.mat = left_corr_matrix_spearman$p, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.9)
+
+scd_status_matrix <- scd_status %>% 
+  filter(SCD == "Control") %>%
+  select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
+right_imaging_matrix <- right_amygdala %>% 
+  filter(SCD == "Control") %>%
+  select(dki_kfa, dki_rk)
+right_corr_matrix_pearson <- psych::corr.test(scd_status_matrix, right_imaging_matrix, use = "pairwise.complete.obs", 
+                                             adjust = "fdr")
+right_corr_pearson <- as.data.frame(right_corr_matrix_pearson$r)
+right_corr_pearson <- tibble::rownames_to_column(right_corr_pearson, "behav_demo_metric")
+right_corr_pearson_long <- right_corr_pearson %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson")
+right_corr_pearson_p <- as.data.frame(right_corr_matrix_pearson$p)
+right_corr_pearson_p <- tibble::rownames_to_column(right_corr_pearson_p, "behav_demo_metric")
+right_corr_pearson_p_long <- right_corr_pearson_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson p value")
+right_corr_pearson_long <- right_join(right_corr_pearson_long, right_corr_pearson_p_long)
+right_corr_pearson_p_adj <- as.data.frame(right_corr_matrix_pearson$p.adj)
+right_corr_pearson_p_adj <- tibble::rownames_to_column(right_corr_pearson_p_adj, "behav_demo_metric")
+right_corr_pearson_p_adj_long <- right_corr_pearson_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Pearson q value")
+right_corr_pearson_long <- right_join(right_corr_pearson_long, right_corr_pearson_p_adj_long)
+
+right_corr_matrix_spearman <- psych::corr.test(scd_status_matrix, right_imaging_matrix, use = "pairwise.complete.obs",
+                                              method = "spearman", adjust = "fdr")
+right_corr_spearman <- as.data.frame(right_corr_matrix_spearman$r)
+right_corr_spearman <- tibble::rownames_to_column(right_corr_spearman, "behav_demo_metric")
+right_corr_spearman_long <- right_corr_spearman %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman")
+right_corr_spearman_p <- as.data.frame(right_corr_matrix_spearman$p)
+right_corr_spearman_p <- tibble::rownames_to_column(right_corr_spearman_p, "behav_demo_metric")
+right_corr_spearman_p_long <- right_corr_spearman_p %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman p value")
+right_corr_spearman_long <- right_join(right_corr_spearman_long, right_corr_spearman_p_long)
+right_corr_spearman_p_adj <- as.data.frame(right_corr_matrix_spearman$p.adj)
+right_corr_spearman_p_adj <- tibble::rownames_to_column(right_corr_spearman_p_adj, "behav_demo_metric")
+right_corr_spearman_p_adj_long <- right_corr_spearman_p_adj %>%
+  pivot_longer( cols = !behav_demo_metric,
+                names_to = "diffusion_metric", values_to = "Spearman q value")
+right_corr_spearman_long <- right_join(right_corr_spearman_long, right_corr_spearman_p_adj_long)
+
+right_corr <- right_join(right_corr_pearson_long, right_corr_spearman_long)
+tinytable::tt(right_corr, digits = 2, caption = "right Amygdala Control")
+
+corrplot::corrplot(right_corr_matrix_spearman$r, p.mat = right_corr_matrix_spearman$p, method = 'color',
+                   sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.9)
+
+
+### 3.2	Correlations Between Imaging Metrics ####
 
 ##models 
 left_amygdala_KFA_by_volume_age_sex_income_education <- 
