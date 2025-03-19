@@ -11,3 +11,5 @@
 slurm-*
 *.html
 .Rproj.user
+*.jpg
+*.tif

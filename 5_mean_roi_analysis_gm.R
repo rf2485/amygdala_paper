@@ -170,12 +170,12 @@ mtr_wm_gm_ratio <- scd_status %>%
   left_join(., mtr_gm)
 mtr_wm_gm_ratio$mtr_wm_gm_ratio <- mtr_wm_gm_ratio$mtr_wm / mtr_wm_gm_ratio$mtr_gm
 
-mtr_tr30 <- aseg2mtr %>%
+mtr_tr30 <- aseg2mtr_gm %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   filter(mt_tr=="TR=30ms")
 
-mtr_tr50 <- aseg2mtr %>%
+mtr_tr50 <- aseg2mtr_gm %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) %>%
   filter(mt_tr=="TR=50ms")
@@ -319,8 +319,8 @@ summary(glm_left_amygdala_dti_fa_age_ctl)
 glm_left_amygdala_dti_fa_age_scd <- lm(dti_fa ~ age, left_amygdala_scd)
 summary(glm_left_amygdala_dti_fa_age_scd)
 
-interactions::interact_plot(glm_left_amygdala_dti_fa_age_int, pred = age, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_fa_age_int, pred = age, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5,
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -338,7 +338,7 @@ interactions::interact_plot(glm_left_amygdala_dti_fa_age_int, pred = age, modx =
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_age_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_age_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -346,10 +346,11 @@ interactions::interact_plot(glm_left_amygdala_dti_fa_age_int, pred = age, modx =
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_age_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_age_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.27) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -360,8 +361,8 @@ summary(glm_left_amygdala_dti_rd_age_ctl)
 glm_left_amygdala_dti_rd_age_scd <- lm(dti_rd ~ age, left_amygdala_scd)
 summary(glm_left_amygdala_dti_rd_age_scd)
 
-interactions::interact_plot(glm_left_amygdala_dti_rd_age_int, pred = age, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_dti_rd <- interactions::interact_plot(glm_left_amygdala_dti_rd_age_int, pred = age, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -378,10 +379,10 @@ interactions::interact_plot(glm_left_amygdala_dti_rd_age_int, pred = age, modx =
   geom_richtext(aes(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
                     label = paste0(
                       # "\\* p = ", signif(summary(glm_left_amygdala_dti_rd_age_scd)$coefficients[2,4], 2),
-                      "p < 0.001",
+                      "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_age_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_age_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -389,10 +390,11 @@ interactions::interact_plot(glm_left_amygdala_dti_rd_age_int, pred = age, modx =
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_age_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_age_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
+  ylim(NA,1.36) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -403,8 +405,8 @@ summary(glm_left_amygdala_dki_kfa_age_ctl)
 glm_left_amygdala_dki_kfa_age_scd <- lm(dki_kfa ~ age, left_amygdala_scd)
 summary(glm_left_amygdala_dki_kfa_age_scd)
 
-interactions::interact_plot(glm_left_amygdala_dki_kfa_age_int, pred = age, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_dki_kfa <- interactions::interact_plot(glm_left_amygdala_dki_kfa_age_int, pred = age, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -424,7 +426,7 @@ interactions::interact_plot(glm_left_amygdala_dki_kfa_age_int, pred = age, modx 
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_age_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_age_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -432,10 +434,11 @@ interactions::interact_plot(glm_left_amygdala_dki_kfa_age_int, pred = age, modx 
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_age_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_age_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -446,8 +449,8 @@ summary(glm_left_amygdala_fit_FWF_age_ctl)
 glm_left_amygdala_fit_FWF_age_scd <- lm(fit_FWF ~ age, left_amygdala_scd)
 summary(glm_left_amygdala_fit_FWF_age_scd)
 
-interactions::interact_plot(glm_left_amygdala_fit_FWF_age_int, pred = age, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_fit_FWF <- interactions::interact_plot(glm_left_amygdala_fit_FWF_age_int, pred = age, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -467,7 +470,7 @@ interactions::interact_plot(glm_left_amygdala_fit_FWF_age_int, pred = age, modx 
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_fit_FWF_age_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_fit_FWF_age_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -475,10 +478,11 @@ interactions::interact_plot(glm_left_amygdala_fit_FWF_age_int, pred = age, modx 
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_fit_FWF_age_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_fit_FWF_age_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.23) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -489,8 +493,8 @@ summary(glm_right_amygdala_dki_kfa_age_ctl)
 glm_right_amygdala_dki_kfa_age_scd <- lm(dki_kfa ~ age, right_amygdala_scd)
 summary(glm_right_amygdala_dki_kfa_age_scd)
 
-interactions::interact_plot(glm_right_amygdala_dki_kfa_age_int, pred = age, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dki_kfa_age_int, pred = age, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             vary.lty = T,
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
@@ -511,7 +515,7 @@ interactions::interact_plot(glm_right_amygdala_dki_kfa_age_int, pred = age, modx
                       "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_age_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_age_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -519,10 +523,11 @@ interactions::interact_plot(glm_right_amygdala_dki_kfa_age_int, pred = age, modx
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_age_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_age_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -533,8 +538,8 @@ summary(glm_right_amygdala_dki_rk_age_ctl)
 glm_right_amygdala_dki_rk_age_scd <- lm(dki_rk ~ age, right_amygdala_scd)
 summary(glm_right_amygdala_dki_rk_age_scd)
 
-interactions::interact_plot(glm_right_amygdala_dki_rk_age_int, pred = age, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_right_amygdala_dki_rk <-interactions::interact_plot(glm_right_amygdala_dki_rk_age_int, pred = age, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             vary.lty = T,
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
@@ -555,7 +560,7 @@ interactions::interact_plot(glm_right_amygdala_dki_rk_age_int, pred = age, modx 
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_age_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_age_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -563,12 +568,23 @@ interactions::interact_plot(glm_right_amygdala_dki_rk_age_int, pred = age, modx 
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_age_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_age_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.9) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
+
+library(patchwork)
+diffusion_age_plots <- plot_left_amygdala_dti_fa + plot_left_amygdala_dti_rd + plot_left_amygdala_dki_kfa + plot_left_amygdala_fit_FWF + 
+  plot_right_amygdala_dki_kfa + plot_right_amygdala_dki_rk +
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(title = "Correlations between age and mean amygdala diffusion metrics. \n* p < 0.05, ** p < 0.005, *** p < 0.001",
+                  tag_levels = "A")
+
+ggsave(filename = "diffusion_age_plots.tif", diffusion_age_plots,
+       width = 8.5, height = 11, dpi = 600, units = "in", device='tiff')
 
 ###memory
 glm_left_amygdala_dti_fa_homeint_storyrecall_d_int <- lm(dti_fa ~ homeint_storyrecall_d * SCD, left_amygdala)
@@ -578,8 +594,8 @@ summary(glm_left_amygdala_dti_fa_homeint_storyrecall_d_ctl)
 glm_left_amygdala_dti_fa_homeint_storyrecall_d_scd <- lm(dti_fa ~ homeint_storyrecall_d, left_amygdala_scd)
 summary(glm_left_amygdala_dti_fa_homeint_storyrecall_d_scd)
 
-interactions::interact_plot(glm_left_amygdala_dti_fa_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_fa_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -597,7 +613,7 @@ interactions::interact_plot(glm_left_amygdala_dti_fa_homeint_storyrecall_d_int, 
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_homeint_storyrecall_d_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_homeint_storyrecall_d_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -605,10 +621,11 @@ interactions::interact_plot(glm_left_amygdala_dti_fa_homeint_storyrecall_d_int, 
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_homeint_storyrecall_d_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_homeint_storyrecall_d_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.27) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -619,8 +636,8 @@ summary(glm_left_amygdala_dti_rd_homeint_storyrecall_d_ctl)
 glm_left_amygdala_dti_rd_homeint_storyrecall_d_scd <- lm(dti_rd ~ homeint_storyrecall_d, left_amygdala_scd)
 summary(glm_left_amygdala_dti_rd_homeint_storyrecall_d_scd)
 
-interactions::interact_plot(glm_left_amygdala_dti_rd_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_dti_rd <- interactions::interact_plot(glm_left_amygdala_dti_rd_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -640,7 +657,7 @@ interactions::interact_plot(glm_left_amygdala_dti_rd_homeint_storyrecall_d_int, 
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_homeint_storyrecall_d_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_homeint_storyrecall_d_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -648,10 +665,11 @@ interactions::interact_plot(glm_left_amygdala_dti_rd_homeint_storyrecall_d_int, 
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_homeint_storyrecall_d_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_homeint_storyrecall_d_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
+  ylim(NA,1.36) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -662,8 +680,8 @@ summary(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_ctl)
 glm_left_amygdala_dki_kfa_homeint_storyrecall_d_scd <- lm(dki_kfa ~ homeint_storyrecall_d, left_amygdala_scd)
 summary(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_scd)
 
-interactions::interact_plot(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_dki_kfa <- interactions::interact_plot(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -683,7 +701,7 @@ interactions::interact_plot(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_int,
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -691,10 +709,11 @@ interactions::interact_plot(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_int,
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_homeint_storyrecall_d_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -705,8 +724,8 @@ summary(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_ctl)
 glm_left_amygdala_fit_FWF_homeint_storyrecall_d_scd <- lm(fit_FWF ~ homeint_storyrecall_d, left_amygdala_scd)
 summary(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_scd)
 
-interactions::interact_plot(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_fit_FWF <- interactions::interact_plot(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -726,7 +745,7 @@ interactions::interact_plot(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_int,
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -734,10 +753,11 @@ interactions::interact_plot(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_int,
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_fit_FWF_homeint_storyrecall_d_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.23) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -748,8 +768,8 @@ summary(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_ctl)
 glm_right_amygdala_dki_kfa_homeint_storyrecall_d_scd <- lm(dki_kfa ~ homeint_storyrecall_d, right_amygdala_scd)
 summary(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_scd)
 
-interactions::interact_plot(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             vary.lty = T,
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
@@ -770,7 +790,7 @@ interactions::interact_plot(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_int
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -778,10 +798,11 @@ interactions::interact_plot(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_int
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_homeint_storyrecall_d_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -792,8 +813,8 @@ summary(glm_right_amygdala_dki_rk_homeint_storyrecall_d_ctl)
 glm_right_amygdala_dki_rk_homeint_storyrecall_d_scd <- lm(dki_rk ~ homeint_storyrecall_d, right_amygdala_scd)
 summary(glm_right_amygdala_dki_rk_homeint_storyrecall_d_scd)
 
-interactions::interact_plot(glm_right_amygdala_dki_rk_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_right_amygdala_dki_rk <- interactions::interact_plot(glm_right_amygdala_dki_rk_homeint_storyrecall_d_int, pred = homeint_storyrecall_d, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             vary.lty = T,
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
@@ -814,7 +835,7 @@ interactions::interact_plot(glm_right_amygdala_dki_rk_homeint_storyrecall_d_int,
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_homeint_storyrecall_d_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_homeint_storyrecall_d_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -822,12 +843,22 @@ interactions::interact_plot(glm_right_amygdala_dki_rk_homeint_storyrecall_d_int,
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_homeint_storyrecall_d_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_homeint_storyrecall_d_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.9) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
+
+diffusion_homeint_storyrecall_d_plots <- plot_left_amygdala_dti_fa + plot_left_amygdala_dti_rd + plot_left_amygdala_dki_kfa + plot_left_amygdala_fit_FWF + 
+  plot_right_amygdala_dki_kfa + plot_right_amygdala_dki_rk +
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(title = "Correlations between memory performance and mean amygdala diffusion metrics. \n* p < 0.05, ** p < 0.005, *** p < 0.001",
+                  tag_levels = "A")
+
+ggsave(filename = "diffusion_homeint_storyrecall_d_plots.tif", diffusion_homeint_storyrecall_d_plots,
+       width = 8.5, height = 11, dpi = 600, units = "in", device='tiff')
 
 ###anxiety
 glm_left_amygdala_dti_fa_additional_hads_anxiety_int <- lm(dti_fa ~ additional_hads_anxiety * SCD, left_amygdala)
@@ -837,8 +868,8 @@ summary(glm_left_amygdala_dti_fa_additional_hads_anxiety_ctl)
 glm_left_amygdala_dti_fa_additional_hads_anxiety_scd <- lm(dti_fa ~ additional_hads_anxiety, left_amygdala_scd)
 summary(glm_left_amygdala_dti_fa_additional_hads_anxiety_scd)
 
-interactions::interact_plot(glm_left_amygdala_dti_fa_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_fa_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -856,7 +887,7 @@ interactions::interact_plot(glm_left_amygdala_dti_fa_additional_hads_anxiety_int
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_anxiety_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_anxiety_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -864,10 +895,11 @@ interactions::interact_plot(glm_left_amygdala_dti_fa_additional_hads_anxiety_int
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_anxiety_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_anxiety_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.27) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -878,8 +910,8 @@ summary(glm_left_amygdala_dti_rd_additional_hads_anxiety_ctl)
 glm_left_amygdala_dti_rd_additional_hads_anxiety_scd <- lm(dti_rd ~ additional_hads_anxiety, left_amygdala_scd)
 summary(glm_left_amygdala_dti_rd_additional_hads_anxiety_scd)
 
-interactions::interact_plot(glm_left_amygdala_dti_rd_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_dti_rd <- interactions::interact_plot(glm_left_amygdala_dti_rd_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -899,7 +931,7 @@ interactions::interact_plot(glm_left_amygdala_dti_rd_additional_hads_anxiety_int
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_additional_hads_anxiety_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_additional_hads_anxiety_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -907,10 +939,11 @@ interactions::interact_plot(glm_left_amygdala_dti_rd_additional_hads_anxiety_int
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_additional_hads_anxiety_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_additional_hads_anxiety_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
+  ylim(NA,1.36) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -921,8 +954,8 @@ summary(glm_left_amygdala_dki_kfa_additional_hads_anxiety_ctl)
 glm_left_amygdala_dki_kfa_additional_hads_anxiety_scd <- lm(dki_kfa ~ additional_hads_anxiety, left_amygdala_scd)
 summary(glm_left_amygdala_dki_kfa_additional_hads_anxiety_scd)
 
-interactions::interact_plot(glm_left_amygdala_dki_kfa_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_dki_kfa <-interactions::interact_plot(glm_left_amygdala_dki_kfa_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -942,7 +975,7 @@ interactions::interact_plot(glm_left_amygdala_dki_kfa_additional_hads_anxiety_in
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_additional_hads_anxiety_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_additional_hads_anxiety_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -950,10 +983,11 @@ interactions::interact_plot(glm_left_amygdala_dki_kfa_additional_hads_anxiety_in
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_additional_hads_anxiety_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_additional_hads_anxiety_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -964,8 +998,8 @@ summary(glm_left_amygdala_fit_FWF_additional_hads_anxiety_ctl)
 glm_left_amygdala_fit_FWF_additional_hads_anxiety_scd <- lm(fit_FWF ~ additional_hads_anxiety, left_amygdala_scd)
 summary(glm_left_amygdala_fit_FWF_additional_hads_anxiety_scd)
 
-interactions::interact_plot(glm_left_amygdala_fit_FWF_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_left_amygdala_fit_FWF <-interactions::interact_plot(glm_left_amygdala_fit_FWF_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
@@ -985,7 +1019,7 @@ interactions::interact_plot(glm_left_amygdala_fit_FWF_additional_hads_anxiety_in
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_fit_FWF_additional_hads_anxiety_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_fit_FWF_additional_hads_anxiety_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -993,10 +1027,11 @@ interactions::interact_plot(glm_left_amygdala_fit_FWF_additional_hads_anxiety_in
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_fit_FWF_additional_hads_anxiety_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_fit_FWF_additional_hads_anxiety_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.23) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -1007,8 +1042,8 @@ summary(glm_right_amygdala_dki_kfa_additional_hads_anxiety_ctl)
 glm_right_amygdala_dki_kfa_additional_hads_anxiety_scd <- lm(dki_kfa ~ additional_hads_anxiety, right_amygdala_scd)
 summary(glm_right_amygdala_dki_kfa_additional_hads_anxiety_scd)
 
-interactions::interact_plot(glm_right_amygdala_dki_kfa_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dki_kfa_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             vary.lty = T,
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
@@ -1029,7 +1064,7 @@ interactions::interact_plot(glm_right_amygdala_dki_kfa_additional_hads_anxiety_i
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_additional_hads_anxiety_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_additional_hads_anxiety_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -1037,10 +1072,11 @@ interactions::interact_plot(glm_right_amygdala_dki_kfa_additional_hads_anxiety_i
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_additional_hads_anxiety_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_additional_hads_anxiety_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -1051,8 +1087,8 @@ summary(glm_right_amygdala_dki_rk_additional_hads_anxiety_ctl)
 glm_right_amygdala_dki_rk_additional_hads_anxiety_scd <- lm(dki_rk ~ additional_hads_anxiety, right_amygdala_scd)
 summary(glm_right_amygdala_dki_rk_additional_hads_anxiety_scd)
 
-interactions::interact_plot(glm_right_amygdala_dki_rk_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
+plot_right_amygdala_dki_rk <- interactions::interact_plot(glm_right_amygdala_dki_rk_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = SCD, 
+                            plot.points = T, interval = T, point.size = 0.5, 
                             vary.lty = T,
                             legend.main = 'Cohort') +
   theme(legend.position = 'none') +
@@ -1073,7 +1109,7 @@ interactions::interact_plot(glm_right_amygdala_dki_rk_additional_hads_anxiety_in
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_anxiety_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_anxiety_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -1081,12 +1117,23 @@ interactions::interact_plot(glm_right_amygdala_dki_rk_additional_hads_anxiety_in
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_anxiety_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_anxiety_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.9) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
+
+diffusion_additional_hads_anxiety_plots <- plot_left_amygdala_dti_fa + plot_left_amygdala_dti_rd + plot_left_amygdala_dki_kfa + plot_left_amygdala_fit_FWF + 
+  plot_right_amygdala_dki_kfa + plot_right_amygdala_dki_rk +
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(title = "Correlations between anxiety and mean amygdala diffusion metrics. \n* p < 0.05, ** p < 0.005, *** p < 0.001",
+                  tag_levels = "A")
+
+ggsave(filename = "diffusion_additional_hads_anxiety_plots.tif", diffusion_additional_hads_anxiety_plots,
+       width = 8.5, height = 11, dpi = 600, units = "in", device='tiff')
+
 
 ###depression
 glm_left_amygdala_dti_fa_additional_hads_depression_int <- lm(dti_fa ~ additional_hads_depression * SCD, left_amygdala)
@@ -1096,12 +1143,12 @@ summary(glm_left_amygdala_dti_fa_additional_hads_depression_ctl)
 glm_left_amygdala_dti_fa_additional_hads_depression_scd <- lm(dti_fa ~ additional_hads_depression, left_amygdala_scd)
 summary(glm_left_amygdala_dti_fa_additional_hads_depression_scd)
 
-interactions::interact_plot(glm_left_amygdala_dti_fa_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
-                            legend.main = 'Cohort') +
+plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_fa_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
+                                                         plot.points = T, interval = T, point.size = 0.5, 
+                                                         legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
-    y = "Mean FA", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Left Mean FA versus Depression",
+    y = "Mean FA", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Left Mean FA versus depression",
     subtitle = paste0("across group p = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_depression_int)$coefficients[2,4], 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_depression_int)$coefficients[2,1], 2),
                       "<br> interaction p = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_depression_int)$coefficients[4,4], 2),
@@ -1115,7 +1162,7 @@ interactions::interact_plot(glm_left_amygdala_dti_fa_additional_hads_depression_
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_depression_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_depression_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -1123,10 +1170,11 @@ interactions::interact_plot(glm_left_amygdala_dti_fa_additional_hads_depression_
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_depression_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_additional_hads_depression_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.27) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -1137,12 +1185,12 @@ summary(glm_left_amygdala_dti_rd_additional_hads_depression_ctl)
 glm_left_amygdala_dti_rd_additional_hads_depression_scd <- lm(dti_rd ~ additional_hads_depression, left_amygdala_scd)
 summary(glm_left_amygdala_dti_rd_additional_hads_depression_scd)
 
-interactions::interact_plot(glm_left_amygdala_dti_rd_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
-                            legend.main = 'Cohort') +
+plot_left_amygdala_dti_rd <- interactions::interact_plot(glm_left_amygdala_dti_rd_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
+                                                         plot.points = T, interval = T, point.size = 0.5, 
+                                                         legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
-    y = "Mean RD", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Left Mean RD versus Depression",
+    y = "Mean RD", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Left Mean RD versus depression",
     subtitle = paste0(
       # "across group *** p < 0.001",
       "across group p = ", signif(summary(glm_left_amygdala_dti_rd_additional_hads_depression_int)$coefficients[2,4], 2),
@@ -1158,7 +1206,7 @@ interactions::interact_plot(glm_left_amygdala_dti_rd_additional_hads_depression_
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_additional_hads_depression_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_additional_hads_depression_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -1166,10 +1214,11 @@ interactions::interact_plot(glm_left_amygdala_dti_rd_additional_hads_depression_
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_additional_hads_depression_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_additional_hads_depression_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
+  ylim(NA,1.36) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -1180,12 +1229,12 @@ summary(glm_left_amygdala_dki_kfa_additional_hads_depression_ctl)
 glm_left_amygdala_dki_kfa_additional_hads_depression_scd <- lm(dki_kfa ~ additional_hads_depression, left_amygdala_scd)
 summary(glm_left_amygdala_dki_kfa_additional_hads_depression_scd)
 
-interactions::interact_plot(glm_left_amygdala_dki_kfa_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
-                            legend.main = 'Cohort') +
+plot_left_amygdala_dki_kfa <-interactions::interact_plot(glm_left_amygdala_dki_kfa_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
+                                                         plot.points = T, interval = T, point.size = 0.5, 
+                                                         legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
-    y = "Mean KFA", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Left Mean KFA versus Depression",
+    y = "Mean KFA", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Left Mean KFA versus depression",
     subtitle = paste0(
       # "across group *** p < 0.001",
       "across group p = ", signif(summary(glm_left_amygdala_dki_kfa_additional_hads_depression_int)$coefficients[2,4], 2),
@@ -1201,7 +1250,7 @@ interactions::interact_plot(glm_left_amygdala_dki_kfa_additional_hads_depression
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_additional_hads_depression_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_additional_hads_depression_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -1209,10 +1258,11 @@ interactions::interact_plot(glm_left_amygdala_dki_kfa_additional_hads_depression
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_additional_hads_depression_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_additional_hads_depression_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -1223,12 +1273,12 @@ summary(glm_left_amygdala_fit_FWF_additional_hads_depression_ctl)
 glm_left_amygdala_fit_FWF_additional_hads_depression_scd <- lm(fit_FWF ~ additional_hads_depression, left_amygdala_scd)
 summary(glm_left_amygdala_fit_FWF_additional_hads_depression_scd)
 
-interactions::interact_plot(glm_left_amygdala_fit_FWF_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
-                            legend.main = 'Cohort') +
+plot_left_amygdala_fit_FWF <-interactions::interact_plot(glm_left_amygdala_fit_FWF_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
+                                                         plot.points = T, interval = T, point.size = 0.5, 
+                                                         legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
-    y = "Mean FWF", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Left Mean FWF versus Depression",
+    y = "Mean FWF", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Left Mean FWF versus depression",
     subtitle = paste0(
       # "across group *** p < 0.001",
       "across group p = ", signif(summary(glm_left_amygdala_fit_FWF_additional_hads_depression_int)$coefficients[2,4], 2),
@@ -1244,7 +1294,7 @@ interactions::interact_plot(glm_left_amygdala_fit_FWF_additional_hads_depression
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_fit_FWF_additional_hads_depression_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_fit_FWF_additional_hads_depression_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -1252,10 +1302,11 @@ interactions::interact_plot(glm_left_amygdala_fit_FWF_additional_hads_depression
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_fit_FWF_additional_hads_depression_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_left_amygdala_fit_FWF_additional_hads_depression_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.23) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -1266,13 +1317,13 @@ summary(glm_right_amygdala_dki_kfa_additional_hads_depression_ctl)
 glm_right_amygdala_dki_kfa_additional_hads_depression_scd <- lm(dki_kfa ~ additional_hads_depression, right_amygdala_scd)
 summary(glm_right_amygdala_dki_kfa_additional_hads_depression_scd)
 
-interactions::interact_plot(glm_right_amygdala_dki_kfa_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
-                            vary.lty = T,
-                            legend.main = 'Cohort') +
+plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dki_kfa_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
+                                                           plot.points = T, interval = T, point.size = 0.5, 
+                                                           vary.lty = T,
+                                                           legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
-    y = "Mean KFA", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Right Mean KFA versus Depression",
+    y = "Mean KFA", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Right Mean KFA versus depression",
     subtitle = paste0(
       # "across group *** p < 0.001",
       "across group p = ", signif(summary(glm_right_amygdala_dki_kfa_additional_hads_depression_int)$coefficients[2,4], 2),
@@ -1288,7 +1339,7 @@ interactions::interact_plot(glm_right_amygdala_dki_kfa_additional_hads_depressio
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_additional_hads_depression_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_additional_hads_depression_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
@@ -1296,10 +1347,11 @@ interactions::interact_plot(glm_right_amygdala_dki_kfa_additional_hads_depressio
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_additional_hads_depression_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_additional_hads_depression_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
 
@@ -1310,13 +1362,13 @@ summary(glm_right_amygdala_dki_rk_additional_hads_depression_ctl)
 glm_right_amygdala_dki_rk_additional_hads_depression_scd <- lm(dki_rk ~ additional_hads_depression, right_amygdala_scd)
 summary(glm_right_amygdala_dki_rk_additional_hads_depression_scd)
 
-interactions::interact_plot(glm_right_amygdala_dki_rk_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
-                            plot.points = T, interval = T, point.alpha = 1, 
-                            vary.lty = T,
-                            legend.main = 'Cohort') +
+plot_right_amygdala_dki_rk <- interactions::interact_plot(glm_right_amygdala_dki_rk_additional_hads_depression_int, pred = additional_hads_depression, modx = SCD, 
+                                                          plot.points = T, interval = T, point.size = 0.5, 
+                                                          vary.lty = T,
+                                                          legend.main = 'Cohort') +
   theme(legend.position = 'none') +
   labs(
-    y = "Mean RK", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Right Mean RK versus Depression",
+    y = "Mean RK", x = "Depression (Hospital Anxiety and Depression Scale)", title = "Right Mean RK versus depression",
     subtitle = paste0(
       # "across group *** p < 0.001",
       "across group p = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_depression_int)$coefficients[2,4], 2),
@@ -1332,20 +1384,30 @@ interactions::interact_plot(glm_right_amygdala_dki_rk_additional_hads_depression
                       # "*** p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_depression_scd)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_depression_scd)$coefficients[2,1], 2)),
-                    color = "SCD"), show.legend = F,
+                    color = "SCD"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
   geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                     label = paste0(
-                      " ** p = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_depression_ctl)$coefficients[2,4], 2),
+                      "p = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_depression_ctl)$coefficients[2,4], 2),
                       # "p < 0.001",
                       ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_depression_ctl)$adj.r.squared, 2),
                       ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_additional_hads_depression_ctl)$coefficients[2,1], 2)),
-                    color = "Control"), show.legend = F,
+                    color = "Control"), show.legend = F, size = 3,
                 fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.9) +
   # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
-  theme_bw() +
+  theme_bw(base_size = 10) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_markdown(hjust = 0.5))
+
+diffusion_additional_hads_depression_plots <- plot_left_amygdala_dti_fa + plot_left_amygdala_dti_rd + plot_left_amygdala_dki_kfa + plot_left_amygdala_fit_FWF + 
+  plot_right_amygdala_dki_kfa + plot_right_amygdala_dki_rk +
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(title = "Correlations between depression and mean amygdala diffusion metrics. \n* p < 0.05, ** p < 0.005, *** p < 0.001",
+                  tag_levels = "A")
+
+ggsave(filename = "diffusion_additional_hads_depression_plots.tif", diffusion_additional_hads_depression_plots,
+       width = 8.5, height = 11, dpi = 600, units = "in", device='tiff')
 
 ##### Pearson and Spearman Tables for significant diffusion measures ######
 #across groups
