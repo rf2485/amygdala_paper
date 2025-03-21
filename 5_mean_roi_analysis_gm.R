@@ -279,8 +279,7 @@ left_amygdala %>%
   select(-participant_id) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
               include = c(dti_fa, dti_md, dti_ad, dti_rd, 
-                          dki_kfa, dki_mk, dki_ak, dki_rk, 
-                          fit_FWF, fit_NDI, fit_ODI)
+                          dki_kfa, dki_mk, dki_ak, dki_rk)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
@@ -294,8 +293,7 @@ right_amygdala %>%
   select(-participant_id) %>% 
   tbl_summary(by = SCD, statistic = all_continuous() ~ "{mean} ({sd})",
               include = c(dti_fa, dti_md, dti_ad, dti_rd, 
-                          dki_kfa, dki_mk, dki_ak, dki_rk, 
-                          fit_FWF, fit_NDI, fit_ODI)
+                          dki_kfa, dki_mk, dki_ak, dki_rk)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
@@ -310,6 +308,238 @@ left_amygdala_ctl <- left_amygdala %>% filter(SCD == "Control")
 left_amygdala_scd <- left_amygdala %>% filter(SCD == "SCD")
 right_amygdala_ctl <- right_amygdala %>% filter(SCD == "Control")
 right_amygdala_scd <- right_amygdala %>% filter(SCD == "SCD")
+
+###volume
+glm_left_amygdala_dti_fa_volume_int <- lm(dti_fa ~ volume * SCD, left_amygdala)
+summary(glm_left_amygdala_dti_fa_volume_int)
+glm_left_amygdala_dti_fa_volume_ctl <- lm(dti_fa ~ volume, left_amygdala_ctl)
+summary(glm_left_amygdala_dti_fa_volume_ctl)
+glm_left_amygdala_dti_fa_volume_scd <- lm(dti_fa ~ volume, left_amygdala_scd)
+summary(glm_left_amygdala_dti_fa_volume_scd)
+
+plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_fa_volume_int, pred = volume, modx = SCD, 
+                                                         plot.points = T, interval = T, point.size = 0.5,
+                                                         legend.main = 'Cohort') +
+  theme(legend.position = 'none') +
+  labs(
+    y = "Mean FA", x = expression(Volume~(mm^3)), title = "Left Mean FA versus volume",
+    subtitle = paste0("across group p = ", signif(summary(glm_left_amygdala_dti_fa_volume_int)$coefficients[2,4], 2),
+                      ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_volume_int)$coefficients[2,1], 2),
+                      "<br> interaction p = ", signif(summary(glm_left_amygdala_dti_fa_volume_int)$coefficients[4,4], 2),
+                      ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_volume_int)$coefficients[4,1], 2),
+                      "<br> adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_volume_int)$adj.r.squared, 2)
+    )
+  ) +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
+                    label = paste0(
+                      "p = ", signif(summary(glm_left_amygdala_dti_fa_volume_scd)$coefficients[2,4], 2),
+                      # "p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_volume_scd)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_volume_scd)$coefficients[2,1], 2)),
+                    color = "SCD"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
+                    label = paste0(
+                      "** p = ", signif(summary(glm_left_amygdala_dti_fa_volume_ctl)$coefficients[2,4], 2),
+                      # "p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_fa_volume_ctl)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_fa_volume_ctl)$coefficients[2,1], 2)),
+                    color = "Control"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.27) +
+  # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5))
+
+glm_left_amygdala_dti_rd_volume_int <- lm(dti_rd ~ volume * SCD, left_amygdala)
+summary(glm_left_amygdala_dti_rd_volume_int)
+glm_left_amygdala_dti_rd_volume_ctl <- lm(dti_rd ~ volume, left_amygdala_ctl)
+summary(glm_left_amygdala_dti_rd_volume_ctl)
+glm_left_amygdala_dti_rd_volume_scd <- lm(dti_rd ~ volume, left_amygdala_scd)
+summary(glm_left_amygdala_dti_rd_volume_scd)
+
+plot_left_amygdala_dti_rd <- interactions::interact_plot(glm_left_amygdala_dti_rd_volume_int, pred = volume, modx = SCD, 
+                                                         plot.points = T, interval = T, point.size = 0.5, 
+                                                         legend.main = 'Cohort') +
+  theme(legend.position = 'none') +
+  labs(
+    y = "Mean RD", x = expression(Volume~(mm^3)), title = "Left Mean RD versus volume",
+    subtitle = paste0(
+      "across group *** p < 0.001",
+      # "across group * p = ", signif(summary(glm_left_amygdala_dti_rd_volume_int)$coefficients[2,4], 2),
+      ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_volume_int)$coefficients[2,1], 2),
+      "<br> interaction p = ", signif(summary(glm_left_amygdala_dti_rd_volume_int)$coefficients[4,4], 2),
+      ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_volume_int)$coefficients[4,1], 2),
+      "<br> adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_volume_int)$adj.r.squared, 2)
+    )
+  ) +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
+                    label = paste0(
+                      # "\\* p = ", signif(summary(glm_left_amygdala_dti_rd_volume_scd)$coefficients[2,4], 2),
+                      "*** p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_volume_scd)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_volume_scd)$coefficients[2,1], 2)),
+                    color = "SCD"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
+                    label = paste0(
+                      # "\\* p = ", signif(summary(glm_left_amygdala_dti_rd_volume_ctl)$coefficients[2,4], 2),
+                      "*** p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dti_rd_volume_ctl)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_left_amygdala_dti_rd_volume_ctl)$coefficients[2,1], 2)),
+                    color = "Control"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
+  ylim(NA,1.36) +
+  # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5))
+
+glm_left_amygdala_dki_kfa_volume_int <- lm(dki_kfa ~ volume * SCD, left_amygdala)
+summary(glm_left_amygdala_dki_kfa_volume_int)
+glm_left_amygdala_dki_kfa_volume_ctl <- lm(dki_kfa ~ volume, left_amygdala_ctl)
+summary(glm_left_amygdala_dki_kfa_volume_ctl)
+glm_left_amygdala_dki_kfa_volume_scd <- lm(dki_kfa ~ volume, left_amygdala_scd)
+summary(glm_left_amygdala_dki_kfa_volume_scd)
+
+plot_left_amygdala_dki_kfa <- interactions::interact_plot(glm_left_amygdala_dki_kfa_volume_int, pred = volume, modx = SCD, 
+                                                          plot.points = T, interval = T, point.size = 0.5, 
+                                                          legend.main = 'Cohort') +
+  theme(legend.position = 'none') +
+  labs(
+    y = "Mean KFA", x = expression(Volume~(mm^3)), title = "Left Mean KFA versus volume",
+    subtitle = paste0(
+      # "across group *** p < 0.001",
+      "across group p = ", signif(summary(glm_left_amygdala_dki_kfa_volume_int)$coefficients[2,4], 2),
+      ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_volume_int)$coefficients[2,1], 2),
+      "<br> interaction p = ", signif(summary(glm_left_amygdala_dki_kfa_volume_int)$coefficients[4,4], 2),
+      ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_volume_int)$coefficients[4,1], 2),
+      "<br> adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_volume_int)$adj.r.squared, 2)
+    )
+  ) +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
+                    label = paste0(
+                      "p = ", signif(summary(glm_left_amygdala_dki_kfa_volume_scd)$coefficients[2,4], 2),
+                      # "*** p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_volume_scd)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_volume_scd)$coefficients[2,1], 2)),
+                    color = "SCD"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
+                    label = paste0(
+                      "p = ", signif(summary(glm_left_amygdala_dki_kfa_volume_ctl)$coefficients[2,4], 2),
+                      # "p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_left_amygdala_dki_kfa_volume_ctl)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_left_amygdala_dki_kfa_volume_ctl)$coefficients[2,1], 2)),
+                    color = "Control"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
+  # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5))
+
+glm_right_amygdala_dki_kfa_volume_int <- lm(dki_kfa ~ volume * SCD, right_amygdala)
+summary(glm_right_amygdala_dki_kfa_volume_int)
+glm_right_amygdala_dki_kfa_volume_ctl <- lm(dki_kfa ~ volume, right_amygdala_ctl)
+summary(glm_right_amygdala_dki_kfa_volume_ctl)
+glm_right_amygdala_dki_kfa_volume_scd <- lm(dki_kfa ~ volume, right_amygdala_scd)
+summary(glm_right_amygdala_dki_kfa_volume_scd)
+
+plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dki_kfa_volume_int, pred = volume, modx = SCD, 
+                                                           plot.points = T, interval = T, point.size = 0.5, 
+                                                           vary.lty = T,
+                                                           legend.main = 'Cohort') +
+  theme(legend.position = 'none') +
+  labs(
+    y = "Mean KFA", x = expression(Volume~(mm^3)), title = "Right Mean KFA versus volume",
+    subtitle = paste0(
+      # "across group *** p < 0.001",
+      "across group ** p = ", signif(summary(glm_right_amygdala_dki_kfa_volume_int)$coefficients[2,4], 2),
+      ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_volume_int)$coefficients[2,1], 2),
+      "<br> interaction ** p = ", signif(summary(glm_right_amygdala_dki_kfa_volume_int)$coefficients[4,4], 2),
+      ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_volume_int)$coefficients[4,1], 2),
+      "<br> adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_volume_int)$adj.r.squared, 2)
+    )
+  ) +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
+                    label = paste0(
+                      # "p = ", signif(summary(glm_right_amygdala_dki_kfa_volume_scd)$coefficients[2,4], 2),
+                      "*** p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_volume_scd)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_volume_scd)$coefficients[2,1], 2)),
+                    color = "SCD"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
+                    label = paste0(
+                      "p = ", signif(summary(glm_right_amygdala_dki_kfa_volume_ctl)$coefficients[2,4], 2),
+                      # "p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_kfa_volume_ctl)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_kfa_volume_ctl)$coefficients[2,1], 2)),
+                    color = "Control"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(0.2, 0.6) +
+  # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5))
+
+glm_right_amygdala_dki_rk_volume_int <- lm(dki_rk ~ volume * SCD, right_amygdala)
+summary(glm_right_amygdala_dki_rk_volume_int)
+glm_right_amygdala_dki_rk_volume_ctl <- lm(dki_rk ~ volume, right_amygdala_ctl)
+summary(glm_right_amygdala_dki_rk_volume_ctl)
+glm_right_amygdala_dki_rk_volume_scd <- lm(dki_rk ~ volume, right_amygdala_scd)
+summary(glm_right_amygdala_dki_rk_volume_scd)
+
+plot_right_amygdala_dki_rk <-interactions::interact_plot(glm_right_amygdala_dki_rk_volume_int, pred = volume, modx = SCD, 
+                                                         plot.points = T, interval = T, point.size = 0.5, 
+                                                         vary.lty = T,
+                                                         legend.main = 'Cohort') +
+  theme(legend.position = 'none') +
+  labs(
+    y = "Mean RK", x = expression(Volume~(mm^3)), title = "Right Mean RK versus volume",
+    subtitle = paste0(
+      # "across group *** p < 0.001",
+      "across group p = ", signif(summary(glm_right_amygdala_dki_rk_volume_int)$coefficients[2,4], 2),
+      ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_volume_int)$coefficients[2,1], 2),
+      "<br> interaction p = ", signif(summary(glm_right_amygdala_dki_rk_volume_int)$coefficients[4,4], 2),
+      ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_volume_int)$coefficients[4,1], 2),
+      "<br> adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_volume_int)$adj.r.squared, 2)
+    )
+  ) +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
+                    label = paste0(
+                      "p = ", signif(summary(glm_right_amygdala_dki_rk_volume_scd)$coefficients[2,4], 2),
+                      # "*** p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_volume_scd)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_volume_scd)$coefficients[2,1], 2)),
+                    color = "SCD"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt"))  +
+  geom_richtext(aes(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
+                    label = paste0(
+                      "p = ", signif(summary(glm_right_amygdala_dki_rk_volume_ctl)$coefficients[2,4], 2),
+                      # "p < 0.001",
+                      ", adj-R<sup>2</sup> = ", signif(summary(glm_right_amygdala_dki_rk_volume_ctl)$adj.r.squared, 2),
+                      ", \u03B2 = ", signif(summary(glm_right_amygdala_dki_rk_volume_ctl)$coefficients[2,1], 2)),
+                    color = "Control"), show.legend = F, size = 3,
+                fill = NA, label.color = NA, label.padding = grid::unit(rep(0,4), "pt")) +
+  ylim(NA,0.9) +
+  # scale_y_continuous(expand = expansion(mult = c(0.02,0.1))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5))
+
+library(patchwork)
+diffusion_volume_plots <- plot_left_amygdala_dti_fa + plot_left_amygdala_dti_rd + plot_left_amygdala_dki_kfa + plot_left_amygdala_fit_FWF + 
+  plot_right_amygdala_dki_kfa + plot_right_amygdala_dki_rk +
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(title = "Correlations between volume and mean amygdala diffusion metrics. \n* p < 0.05, ** p < 0.005, *** p < 0.001",
+                  tag_levels = "A")
+
+ggsave(filename = "diffusion_volume_plots.tif", diffusion_volume_plots,
+       width = 8.5, height = 11, dpi = 600, units = "in", device='tiff')
+
 
 ###age 
 glm_left_amygdala_dti_fa_age_int <- lm(dti_fa ~ age * SCD, left_amygdala)
