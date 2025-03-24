@@ -310,6 +310,212 @@ left_amygdala_scd <- left_amygdala %>% filter(SCD == "SCD")
 right_amygdala_ctl <- right_amygdala %>% filter(SCD == "Control")
 right_amygdala_scd <- right_amygdala %>% filter(SCD == "SCD")
 
+### DTI FA correlations with bioloigcally interpretable imaging metrics
+glm_left_amygdala_dti_fa_volume_scd <- lm(dti_fa ~ volume, left_amygdala_scd)
+summary(glm_left_amygdala_dti_fa_volume_scd)
+corr_p_value <- summary(glm_left_amygdala_dti_fa_volume_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_dti_fa_volume_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_dti_fa_volume_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_dti_fa_volume_scd, c( "volume[all]"))
+plot_glm_left_amygdala_dti_fa_volume_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    x = expression(Volume~(mm^3)),
+    title = "Left amygdala Volume",
+    subtitle = paste0(
+      # "*** p < 0.001",
+      "p = ", signif(corr_p_value, 2),
+      ", \u03B2 = ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+glm_left_amygdala_dti_fa_fit_NDI_scd <- lm(dti_fa ~ fit_NDI, left_amygdala_scd)
+summary(glm_left_amygdala_dti_fa_fit_NDI_scd)
+corr_p_value <- summary(glm_left_amygdala_dti_fa_fit_NDI_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_dti_fa_fit_NDI_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_dti_fa_fit_NDI_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_dti_fa_fit_NDI_scd, c( "fit_NDI[all]"))
+plot_glm_left_amygdala_dti_fa_fit_NDI_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    title = "Left amygdala mean NDI",
+    subtitle = paste0(
+      "*** p < 0.001",
+      # "<br>p = ", signif(corr_p_value, 2),
+      ", \u03B2 = ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+glm_left_amygdala_dti_fa_fit_ODI_scd <- lm(dti_fa ~ fit_ODI, left_amygdala_scd)
+summary(glm_left_amygdala_dti_fa_fit_ODI_scd)
+corr_p_value <- summary(glm_left_amygdala_dti_fa_fit_ODI_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_dti_fa_fit_ODI_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_dti_fa_fit_ODI_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_dti_fa_fit_ODI_scd, c( "fit_ODI[all]"))
+plot_glm_left_amygdala_dti_fa_fit_ODI_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    title = "Left amygdala mean ODI",
+    subtitle = paste0(
+      "*** p < 0.001",
+      # "<br>p = ", signif(corr_p_value, 2),
+      ", \u03B2 = ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+glm_left_amygdala_dti_fa_fit_FWF_scd <- lm(dti_fa ~ fit_FWF, left_amygdala_scd)
+summary(glm_left_amygdala_dti_fa_fit_FWF_scd)
+corr_p_value <- summary(glm_left_amygdala_dti_fa_fit_FWF_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_dti_fa_fit_FWF_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_dti_fa_fit_FWF_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_dti_fa_fit_FWF_scd, c( "fit_FWF[all]"))
+plot_glm_left_amygdala_dti_fa_fit_FWF_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    title = "Left amygdala mean FWF",
+    subtitle = paste0(
+      # "*** p < 0.001",
+      "p = ", signif(corr_p_value, 2),
+      ", \u03B2 = ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+left_amygdala_dti_fa_bio_plots <- plot_glm_left_amygdala_dti_fa_volume_scd + 
+  plot_glm_left_amygdala_dti_fa_fit_NDI_scd + 
+  plot_glm_left_amygdala_dti_fa_fit_ODI_scd + 
+  plot_glm_left_amygdala_dti_fa_fit_FWF_scd +
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(title = "Correlations between Left Amygdala FA and Biologically Interpretable 
+  \nImaging Metrics in SCD. * p < 0.05, ** p < 0.01, *** p < 0.001",
+                  tag_levels = "A")
+ggsave(filename = "left_amygdala_dti_fa_bio_plots.tif", left_amygdala_dti_fa_bio_plots,
+       width = 6.5, height = 5.5, dpi = 600, units = "in", device='tiff')
+
+glm_left_amygdala_dki_kfa_volume_scd <- lm(dki_kfa ~ volume, left_amygdala_scd)
+summary(glm_left_amygdala_dki_kfa_volume_scd)
+corr_p_value <- summary(glm_left_amygdala_dki_kfa_volume_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_dki_kfa_volume_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_dki_kfa_volume_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_dki_kfa_volume_scd, c( "volume[all]"))
+plot_glm_left_amygdala_dki_kfa_volume_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    x = expression(Volume~(mm^3)),
+    title = "Left amygdala Volume",
+    subtitle = paste0(
+      # "*** p < 0.001",
+      "p = ", signif(corr_p_value, 2),
+      ", \u03B2 = ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+glm_left_amygdala_dki_kfa_fit_NDI_scd <- lm(dki_kfa ~ fit_NDI, left_amygdala_scd)
+summary(glm_left_amygdala_dki_kfa_fit_NDI_scd)
+corr_p_value <- summary(glm_left_amygdala_dki_kfa_fit_NDI_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_dki_kfa_fit_NDI_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_dki_kfa_fit_NDI_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_dki_kfa_fit_NDI_scd, c( "fit_NDI[all]"))
+plot_glm_left_amygdala_dki_kfa_fit_NDI_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    title = "Left amygdala mean NDI",
+    subtitle = paste0(
+      # "*** p < 0.001",
+      "p = ", signif(corr_p_value, 2),
+      ", \u03B2 = ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+glm_left_amygdala_dki_kfa_fit_ODI_scd <- lm(dki_kfa ~ fit_ODI, left_amygdala_scd)
+summary(glm_left_amygdala_dki_kfa_fit_ODI_scd)
+corr_p_value <- summary(glm_left_amygdala_dki_kfa_fit_ODI_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_dki_kfa_fit_ODI_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_dki_kfa_fit_ODI_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_dki_kfa_fit_ODI_scd, c( "fit_ODI[all]"))
+plot_glm_left_amygdala_dki_kfa_fit_ODI_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    title = "Left amygdala mean ODI",
+    subtitle = paste0(
+      # "*** p < 0.001",
+      "\\* p = ", signif(corr_p_value, 2),
+      ", \u03B2 = ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+glm_left_amygdala_dki_kfa_fit_FWF_scd <- lm(dki_kfa ~ fit_FWF, left_amygdala_scd)
+summary(glm_left_amygdala_dki_kfa_fit_FWF_scd)
+corr_p_value <- summary(glm_left_amygdala_dki_kfa_fit_FWF_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_dki_kfa_fit_FWF_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_dki_kfa_fit_FWF_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_dki_kfa_fit_FWF_scd, c( "fit_FWF[all]"))
+plot_glm_left_amygdala_dki_kfa_fit_FWF_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    title = "Left amygdala mean FWF",
+    subtitle = paste0(
+      "*** p < 0.001",
+      # "\\* p = ", signif(corr_p_value, 2),
+      ", \u03B2 = ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup> = ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+left_amygdala_dki_kfa_bio_plots <- plot_glm_left_amygdala_dki_kfa_volume_scd + 
+  plot_glm_left_amygdala_dki_kfa_fit_NDI_scd + 
+  plot_glm_left_amygdala_dki_kfa_fit_ODI_scd + 
+  plot_glm_left_amygdala_dki_kfa_fit_FWF_scd +
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(title = "Correlations between Left Amygdala FA and Biologically Interpretable 
+  \nImaging Metrics in SCD. * p < 0.05, ** p < 0.01, *** p < 0.001",
+                  tag_levels = "A")
+ggsave(filename = "left_amygdala_dki_kfa_bio_plots.tif", left_amygdala_dki_kfa_bio_plots,
+       width = 6.5, height = 5.5, dpi = 600, units = "in", device='tiff')
+
+
+glm_right_amygdala_dki_kfa_volume_scd <- lm(dki_kfa ~ volume, right_amygdala_scd)
+summary(glm_right_amygdala_dki_kfa_volume_scd)
+glm_right_amygdala_dki_kfa_fit_NDI_scd <- lm(dki_kfa ~ fit_NDI, right_amygdala_scd)
+summary(glm_right_amygdala_dki_kfa_fit_NDI_scd)
+glm_right_amygdala_dki_kfa_fit_ODI_scd <- lm(dki_kfa ~ fit_ODI, right_amygdala_scd)
+summary(glm_right_amygdala_dki_kfa_fit_ODI_scd)
+glm_right_amygdala_dki_kfa_fit_FWF_scd <- lm(dki_kfa ~ fit_FWF, right_amygdala_scd)
+summary(glm_right_amygdala_dki_kfa_fit_FWF_scd)
+
+glm_left_amygdala_dti_fa_age_int <- lm(dti_fa ~ age * SCD, left_amygdala)
+summary(glm_left_amygdala_dti_fa_age_int)
+glm_left_amygdala_dki_kfa_age_int <- lm(dki_kfa ~ age * SCD, left_amygdala)
+summary(glm_left_amygdala_dki_kfa_age_int)
+glm_left_amygdala_fit_FWF_age_int <- lm(fit_FWF ~ age * SCD, left_amygdala)
+summary(glm_left_amygdala_fit_FWF_age_int)
+glm_right_amygdala_dki_kfa_age_int <- lm(dki_kfa ~ age * SCD, right_amygdala)
+summary(glm_right_amygdala_dki_kfa_age_int)
+
+glm_left_amygdala_dti_fa_additional_hads_anxiety_int <- lm(dti_fa ~ additional_hads_anxiety * SCD, left_amygdala)
+summary(glm_left_amygdala_dti_fa_additional_hads_anxiety_int)
+glm_left_amygdala_dki_kfa_additional_hads_anxiety_int <- lm(dki_kfa ~ additional_hads_anxiety * SCD, left_amygdala)
+summary(glm_left_amygdala_dki_kfa_additional_hads_anxiety_int)
+glm_left_amygdala_fit_FWF_additional_hads_anxiety_int <- lm(fit_FWF ~ additional_hads_anxiety * SCD, left_amygdala)
+summary(glm_left_amygdala_fit_FWF_additional_hads_anxiety_int)
+glm_right_amygdala_dki_kfa_additional_hads_anxiety_int <- lm(dki_kfa ~ additional_hads_anxiety * SCD, right_amygdala)
+summary(glm_right_amygdala_dki_kfa_additional_hads_anxiety_int)
+
+
 ###volume
 glm_left_amygdala_dti_fa_volume_groupcov <- lm(dti_fa ~ volume + SCD, left_amygdala)
 summary(glm_left_amygdala_dti_fa_volume_groupcov)
