@@ -2,10 +2,20 @@
 
 Running this code requires the following dependencies:
 
-- RStudio \>= 2023.09.1+494 with the following packages:
-  - base \>= 4.3.2
+- RStudio \>= 2024.12.1+563 with the following packages:
+  - base \>= 4.4.3
   - tidyverse \>= 2.0.0
-  - arsenal \>= 3.6.3
+  - labelVector \>= 0.1.2
+  - gtsummary \>= 2.0.4
+  - ggeffects \>= 2.1.0
+  - ggtext \>= 0.1.2
+  - patchwork \>= 1.3.0
+  - cowplot \>= 1.1.3
+  - rstatix \>= 0.7.2
+  - glue \>= 1.8.0
+  - gt \> 0.11.1
+  - interactions \>= 1.2.0
+  - grid \>= 4.4.3
 - FreeSurfer == 7.4.1
 - Singularity == 3.9.8
 - miniconda3 \>= 4.9.2
