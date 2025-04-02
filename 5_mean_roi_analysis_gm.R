@@ -6,8 +6,6 @@ library(ggeffects)
 library(ggtext)
 library(patchwork)
 
-
-
 ######### Generate Figure of Amygdala Segmentations ##########
 #images generated with FreeSurfer screenshot GUI
 t1_ss <- tiff::readTIFF("t1 amygdala.tiff")
@@ -19,38 +17,23 @@ fwf_ss <- tiff::readTIFF("fwf amygdala.tiff")
 ndi_ss <- tiff::readTIFF("ndi amygdala.tiff")
 odi_ss <- tiff::readTIFF("odi amygdala.tiff")
 
-figure_1 <- cowplot::plot_grid(t1_ss, fa_ss, labels = c("a", "b"))
+fa_ss <- cowplot::ggdraw() + cowplot::draw_image("fa amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
+md_ss <- cowplot::ggdraw() + cowplot::draw_image("md amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
+kfa_ss <- cowplot::ggdraw() + cowplot::draw_image("kfa amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
+mk_ss <- cowplot::ggdraw() + cowplot::draw_image("mk amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
+fwf_ss <- cowplot::ggdraw() + cowplot::draw_image("fwf amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
+ndi_ss <- cowplot::ggdraw() + cowplot::draw_image("ndi amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
+odi_ss <- cowplot::ggdraw() + cowplot::draw_image("odi amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
+t1_ss <- cowplot::ggdraw() + cowplot::draw_image("t1 amygdala.tiff", scale = 0.99) + theme(plot.margin = unit(c(0,0,0,0), "cm"))
 
-ggsave(filename = "figure_1.tif", figure_1,
-       width = 7.5, height = 7.5, dpi = 1200, units = "in", device='tiff') 
-
-fa_ss <- cowplot::ggdraw() + cowplot::draw_image("fa amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-md_ss <- cowplot::ggdraw() + cowplot::draw_image("md amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-kfa_ss <- cowplot::ggdraw() + cowplot::draw_image("kfa amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-mk_ss <- cowplot::ggdraw() + cowplot::draw_image("mk amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-fwf_ss <- cowplot::ggdraw() + cowplot::draw_image("fwf amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-ndi_ss <- cowplot::ggdraw() + cowplot::draw_image("ndi amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-odi_ss <- cowplot::ggdraw() + cowplot::draw_image("odi amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-t1_ss <- cowplot::ggdraw() + cowplot::draw_image("t1 amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-
-
-cowplot::plot_grid(fa_ss, md_ss, kfa_ss, mk_ss, fwf_ss, ndi_ss, odi_ss, t1_ss,
-                   nrow = 4, labels = "auto", scale = 0.9)
-
-(fa_ss | md_ss) / (kfa_ss | mk_ss) / (fwf_ss | ndi_ss) / (odi_ss | t1_ss) +
-  plot_layout(guides = "collect") +
-  plot_annotation(tag_levels = "a")
-
-(fa_ss | md_ss) / plot_spacer() / 
-  (kfa_ss | mk_ss) / plot_spacer() / 
-  (fwf_ss | ndi_ss) / plot_spacer() /
-  (odi_ss | t1_ss) +
-  plot_layout(guides = "collect", 
-              widths = c(1,1,2,1,1,2,1,1)) +
-  plot_annotation(tag_levels = "a")
-ggsave(filename = "figure_1.tif", figure_1,
-       width = 7.5, height = 7.5, dpi = 1200, units = "in", device='tiff') 
-
+figure1_list <- cowplot::align_plots(fa_ss, md_ss, kfa_ss, mk_ss, fwf_ss, ndi_ss, odi_ss, t1_ss, 
+                                     align = 'hv', axis = 'tblr')
+names(figure1_list) <- c("fa_ss", "md_ss", "kfa_ss", "mk_ss", "fwf_ss", "ndi_ss", "odi_ss", "t1_ss")
+figure_1 <- cowplot::plot_grid(figure1_list$fa_ss, figure1_list$md_ss, figure1_list$kfa_ss, figure1_list$mk_ss, 
+                   figure1_list$fwf_ss, figure1_list$ndi_ss, figure1_list$odi_ss, figure1_list$t1_ss,
+                   nrow = 4, labels = "auto", scale = 0.95)
+ggsave(filename = "figure_1.tif", figure_1, bg = 'white',
+       width = 6.5, height = 7.5, dpi = 1200, units = "in", device='tiff') 
 
 ######### subcort GM #################
 failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
@@ -896,11 +879,6 @@ summary(clm_right_amygdala_dki_kfa_depression_ctl)
 ctl_p_value <- summary(clm_right_amygdala_dki_kfa_depression_ctl)$coefficients["dki_kfa", "Pr(>|z|)"]
 ctl_beta <- summary(clm_right_amygdala_dki_kfa_depression_ctl)$coefficients["dki_kfa", "Estimate"]
 ctl_odds_ratio <- exp(ctl_beta)
-marginaleffects::plot_predictions(clm_right_amygdala_dki_kfa_depression_int, type = "prob", condition = "dki_kfa")
-predict_response(clm_right_amygdala_dki_kfa_depression_int, c("dki_kfa", "Group")) %>% plot()
-
-ggplot(right_amygdala, aes(dti_fa, additional_hads_anxiety, color=Group)) +
-  geom_point()
 
 glm_left_amygdala_dti_fa_anxiety_int <- lm(dti_fa ~ additional_hads_anxiety * Group, left_amygdala)
 summary(glm_left_amygdala_dti_fa_anxiety_int)
@@ -1708,14 +1686,14 @@ corrplot::corrplot(corr_matrix_spearman$r, p.mat = corr_matrix_spearman$p, metho
 
 #scd_only
 scd_status_matrix <- scd_status %>% 
-  filter(SCD == "SCD") %>%
+  filter(Group == "SCD") %>%
   select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
 left_imaging_matrix <- left_amygdala %>% 
-  filter(SCD == "SCD") %>%
+  filter(Group == "SCD") %>%
   select(dti_fa, fit_FWF, dki_kfa) %>%
   rename_with( ~ paste0(.x, "_left"))
 right_imaging_matrix <- right_amygdala %>% 
-  filter(SCD == "SCD") %>%
+  filter(Group == "SCD") %>%
   select(dki_kfa) %>%
   rename_with( ~ paste0(.x, "_right"))
 imaging_matrix <- cbind(left_imaging_matrix, right_imaging_matrix)
@@ -1772,14 +1750,14 @@ corrplot::corrplot(corr_matrix_spearman$r, p.mat = corr_matrix_spearman$p, metho
 
 #ctl_only
 scd_status_matrix <- scd_status %>% 
-  filter(SCD == "Control") %>%
+  filter(Group == "Control") %>%
   select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
 left_imaging_matrix <- left_amygdala %>% 
-  filter(SCD == "Control") %>%
+  filter(Group == "Control") %>%
   select(dti_fa, fit_FWF, dki_kfa) %>%
   rename_with( ~ paste0(.x, "_left"))
 right_imaging_matrix <- right_amygdala %>% 
-  filter(SCD == "Control") %>%
+  filter(Group == "Control") %>%
   select(dki_kfa) %>%
   rename_with( ~ paste0(.x, "_right"))
 imaging_matrix <- cbind(left_imaging_matrix, right_imaging_matrix)
@@ -1805,7 +1783,7 @@ corr_pearson_p_adj_long <- corr_pearson_p_adj %>%
                 names_to = "diffusion_metric", values_to = "Pearson q value")
 corr_pearson_long <- left_join(corr_pearson_long, corr_pearson_p_adj_long)
 
-corr_matrix_spearman <- psych::corr.test(Control_status_matrix, imaging_matrix, use = "pairwise.complete.obs",
+corr_matrix_spearman <- psych::corr.test(scd_status_matrix, imaging_matrix, use = "pairwise.complete.obs",
                                          method = "spearman", adjust = "fdr")
 corr_spearman <- as.data.frame(corr_matrix_spearman$r)
 corr_spearman <- tibble::rownames_to_column(corr_spearman, "behav_demo_metric")
@@ -1832,4 +1810,3 @@ tinytable::tt(corr_table, digits = 2, caption = "Control Only")
 
 corrplot::corrplot(corr_matrix_spearman$r, p.mat = corr_matrix_spearman$p, method = 'color',
                    sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.9)
-
