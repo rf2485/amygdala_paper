@@ -6,6 +6,8 @@ library(ggeffects)
 library(ggtext)
 library(patchwork)
 
+
+
 ######### Generate Figure of Amygdala Segmentations ##########
 #images generated with FreeSurfer screenshot GUI
 t1_ss <- tiff::readTIFF("t1 amygdala.tiff")
@@ -17,23 +19,38 @@ fwf_ss <- tiff::readTIFF("fwf amygdala.tiff")
 ndi_ss <- tiff::readTIFF("ndi amygdala.tiff")
 odi_ss <- tiff::readTIFF("odi amygdala.tiff")
 
-fa_ss <- cowplot::ggdraw() + cowplot::draw_image("fa amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
-md_ss <- cowplot::ggdraw() + cowplot::draw_image("md amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
-kfa_ss <- cowplot::ggdraw() + cowplot::draw_image("kfa amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
-mk_ss <- cowplot::ggdraw() + cowplot::draw_image("mk amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
-fwf_ss <- cowplot::ggdraw() + cowplot::draw_image("fwf amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
-ndi_ss <- cowplot::ggdraw() + cowplot::draw_image("ndi amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
-odi_ss <- cowplot::ggdraw() + cowplot::draw_image("odi amygdala.tiff") + theme(plot.margin = unit(c(0,0,0,0), "cm"))
-t1_ss <- cowplot::ggdraw() + cowplot::draw_image("t1 amygdala.tiff", scale = 0.99) + theme(plot.margin = unit(c(0,0,0,0), "cm"))
+figure_1 <- cowplot::plot_grid(t1_ss, fa_ss, labels = c("a", "b"))
 
-figure1_list <- cowplot::align_plots(fa_ss, md_ss, kfa_ss, mk_ss, fwf_ss, ndi_ss, odi_ss, t1_ss, 
-                                     align = 'hv', axis = 'tblr')
-names(figure1_list) <- c("fa_ss", "md_ss", "kfa_ss", "mk_ss", "fwf_ss", "ndi_ss", "odi_ss", "t1_ss")
-figure_1 <- cowplot::plot_grid(figure1_list$fa_ss, figure1_list$md_ss, figure1_list$kfa_ss, figure1_list$mk_ss, 
-                   figure1_list$fwf_ss, figure1_list$ndi_ss, figure1_list$odi_ss, figure1_list$t1_ss,
-                   nrow = 4, labels = "auto", scale = 0.95)
-ggsave(filename = "figure_1.tif", figure_1, bg = 'white',
-       width = 6.5, height = 7.5, dpi = 1200, units = "in", device='tiff') 
+ggsave(filename = "figure_1.tif", figure_1,
+       width = 7.5, height = 7.5, dpi = 1200, units = "in", device='tiff') 
+
+fa_ss <- cowplot::ggdraw() + cowplot::draw_image("fa amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
+md_ss <- cowplot::ggdraw() + cowplot::draw_image("md amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
+kfa_ss <- cowplot::ggdraw() + cowplot::draw_image("kfa amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
+mk_ss <- cowplot::ggdraw() + cowplot::draw_image("mk amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
+fwf_ss <- cowplot::ggdraw() + cowplot::draw_image("fwf amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
+ndi_ss <- cowplot::ggdraw() + cowplot::draw_image("ndi amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
+odi_ss <- cowplot::ggdraw() + cowplot::draw_image("odi amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
+t1_ss <- cowplot::ggdraw() + cowplot::draw_image("t1 amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
+
+
+cowplot::plot_grid(fa_ss, md_ss, kfa_ss, mk_ss, fwf_ss, ndi_ss, odi_ss, t1_ss,
+                   nrow = 4, labels = "auto", scale = 0.9)
+
+(fa_ss | md_ss) / (kfa_ss | mk_ss) / (fwf_ss | ndi_ss) / (odi_ss | t1_ss) +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "a")
+
+(fa_ss | md_ss) / plot_spacer() / 
+  (kfa_ss | mk_ss) / plot_spacer() / 
+  (fwf_ss | ndi_ss) / plot_spacer() /
+  (odi_ss | t1_ss) +
+  plot_layout(guides = "collect", 
+              widths = c(1,1,2,1,1,2,1,1)) +
+  plot_annotation(tag_levels = "a")
+ggsave(filename = "figure_1.tif", figure_1,
+       width = 7.5, height = 7.5, dpi = 1200, units = "in", device='tiff') 
+
 
 ######### subcort GM #################
 failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
@@ -77,7 +94,7 @@ my_cramer_v <- function(data, variable, by, ...) {
   table(data[[variable]], data[[by]]) %>%
     rstatix::cramer_v()
 }
-
+theme_gtsummary_mean_sd()
 ### 3.1	Group differences between SCD and controls ###
 
 #extract SCD status and demographics for participants
@@ -186,26 +203,6 @@ dki_rk <- aseg2dki_rk_gm %>%
   rename(participant_id = Measure.mean) %>%
   left_join(scd_status, .) 
 
-mtr_wm <- read_tsv("freesurfer/mtr_wm.tsv") %>%
-  rename(participant_id=`Measure:mean`, mtr_wm=Seg0001)
-mtr_gm <- read_tsv("freesurfer/mtr_gm.tsv") %>%
-  rename(participant_id=`Measure:mean`, mtr_gm=Seg0001)
-mtr_wm_gm_ratio <- scd_status %>%
-  left_join(., mtr_wm) %>%
-  left_join(., mtr_gm)
-mtr_wm_gm_ratio$mtr_wm_gm_ratio <- mtr_wm_gm_ratio$mtr_wm / mtr_wm_gm_ratio$mtr_gm
-
-mtr_tr30 <- aseg2mtr_gm %>%
-  rename(participant_id = Measure.mean) %>%
-  left_join(scd_status, .) %>%
-  filter(mt_tr=="TR=30ms")
-
-mtr_tr50 <- aseg2mtr_gm %>%
-  rename(participant_id = Measure.mean) %>%
-  left_join(scd_status, .) %>%
-  filter(mt_tr=="TR=50ms")
-
-
 #### focus on amygdala ####
 left_amygdala <- volumes %>% dplyr::select(participant_id:bmi_cardio, Left.Amygdala) %>%
   rename(volume = "Left.Amygdala")
@@ -231,10 +228,6 @@ left_amygdala <- dki_ak %>% dplyr::select(participant_id, Left.Amygdala) %>%
   rename(dki_ak = "Left.Amygdala") %>% full_join(left_amygdala, .)
 left_amygdala <- dki_rk %>% dplyr::select(participant_id, Left.Amygdala) %>%
   rename(dki_rk = "Left.Amygdala") %>% full_join(left_amygdala, .)
-# left_amygdala <- mtr_tr30 %>% dplyr::select(participant_id, Left.Amygdala) %>%
-#   rename(mtr_tr30 = "Left.Amygdala") %>% full_join(left_amygdala, .)
-# left_amygdala <- mtr_tr50 %>% dplyr::select(participant_id, Left.Amygdala) %>%
-#   rename(mtr_tr50 = "Left.Amygdala") %>% full_join(left_amygdala, .)
 left_amygdala$region <- "Left Amygdala"
 
 left_amygdala <- set_label(left_amygdala,
@@ -249,8 +242,6 @@ left_amygdala <- set_label(left_amygdala,
                            dki_mk = "MK",
                            dki_ak = "AK",
                            dki_rk = "RK"
-                           # mtr_tr30 = "MTR TR=30ms",
-                           # mtr_tr50 = "MTR TR=50ms"
 )
 
 right_amygdala <- volumes %>% dplyr::select(participant_id:bmi_cardio, Right.Amygdala) %>%
@@ -277,26 +268,20 @@ right_amygdala <- dki_ak %>% dplyr::select(participant_id, Right.Amygdala) %>%
   rename(dki_ak = "Right.Amygdala") %>% full_join(right_amygdala, .)
 right_amygdala <- dki_rk %>% dplyr::select(participant_id, Right.Amygdala) %>%
   rename(dki_rk = "Right.Amygdala") %>% full_join(right_amygdala, .)
-# right_amygdala <- mtr_tr30 %>% dplyr::select(participant_id, Right.Amygdala) %>%
-#   rename(mtr_tr30 = "Right.Amygdala") %>% full_join(right_amygdala, .)
-# right_amygdala <- mtr_tr50 %>% dplyr::select(participant_id, Right.Amygdala) %>%
-#   rename(mtr_tr50 = "Right.Amygdala") %>% full_join(right_amygdala, .)
 
 right_amygdala$region <- "Right Amygdala"
 right_amygdala <- set_label(right_amygdala,
-                           fit_NDI = "NDI",
-                           fit_FWF = "FWF",
-                           fit_ODI = "ODI",
-                           dti_fa = "FA",
-                           dti_md = "MD",
-                           dti_ad = "AxD",
-                           dti_rd = "RD",
-                           dki_kfa = "KFA",
-                           dki_mk = "MK",
-                           dki_ak = "AK",
-                           dki_rk = "RK"
-                           # mtr_tr30 = "MTR TR=30ms",
-                           # mtr_tr50 = "MTR TR=50ms"
+                            fit_NDI = "NDI",
+                            fit_FWF = "FWF",
+                            fit_ODI = "ODI",
+                            dti_fa = "FA",
+                            dti_md = "MD",
+                            dti_ad = "AxD",
+                            dti_rd = "RD",
+                            dki_kfa = "KFA",
+                            dki_mk = "MK",
+                            dki_ak = "AK",
+                            dki_rk = "RK"
 )
 
 
@@ -304,11 +289,11 @@ left_amygdala %>%
   select(-participant_id) %>% 
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})",
               include = c(volume, dti_fa, dti_md, dki_kfa, dki_mk, 
-                           fit_FWF, fit_NDI, fit_ODI)
+                          fit_FWF, fit_NDI, fit_ODI)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  add_p() %>% bold_p(t=0.025) %>% 
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Imaging Metric**",
                 estimate ~ "**Effect Size**") %>%
@@ -318,35 +303,17 @@ left_amygdala %>%
 right_amygdala %>% 
   select(-participant_id) %>% 
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(dti_fa, dti_md, dki_kfa, dki_mk, 
-                          volume, fit_FWF, fit_NDI, fit_ODI)
+              include = c(volume, dti_fa, dti_md, dki_kfa, dki_mk, 
+                          fit_FWF, fit_NDI, fit_ODI)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% add_q() %>% bold_p() %>% bold_p(q=T) %>% #filter_p() %>%
+  add_p() %>% bold_p(t=0.025) %>% 
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Imaging Metric**",
                 estimate ~ "**Effect Size**") %>%
   as_gt() %>%
   gt::gtsave(filename = "right_amygdala_table.docx")
-
-#### ROC and AUC ####
-library(pROC)
-pROC::roc.test(response = right_amygdala$Group, predictor1 = right_amygdala$volume, 
-               predictor2 = right_amygdala$dki_kfa, levels = c("Control", "SCD"))
-
-rocobj1 <- plot.roc(right_amygdala$Group, right_amygdala$volume, print.auc = T,
-                    
-                    main="AUC Volume vs KFA, Right Amygdala", percent=TRUE, col="#1c61b6")
-
-rocobj2 <- plot.roc(right_amygdala$Group, right_amygdala$dki_kfa, print.auc = T, print.auc.adj = c(0, 3), add = T,
-                     percent=TRUE, col="#008600")
-
-testobj <- roc.test(rocobj1, rocobj2)
-
-text(20, 45, labels=paste("p-value =", format.pval(testobj$p.value, digits = 2, eps = 0.001)), adj=c(0, .5))
-
-legend("bottomright", legend=c("Volume", "KFA"), col=c("#1c61b6", "#008600"), lwd=2)
 
 ##### Scatterplots of Linear Models ######
 left_amygdala_ctl <- left_amygdala %>% filter(Group == "Control")
@@ -367,7 +334,7 @@ plot_glm_left_amygdala_dti_fa_volume_scd <-
     x = expression(Volume~(mm^3)),
     title = "Left Amygdala Volume",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -386,7 +353,7 @@ plot_glm_left_amygdala_dti_fa_fit_NDI_scd <-
   labs(
     title = "Left Amygdala Mean NDI",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -405,7 +372,7 @@ plot_glm_left_amygdala_dti_fa_fit_ODI_scd <-
   labs(
     title = "Left Amygdala Mean ODI",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -424,7 +391,7 @@ plot_glm_left_amygdala_dti_fa_fit_FWF_scd <-
   labs(
     title = "Left Amygdala Mean FWF",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -453,7 +420,7 @@ plot_glm_left_amygdala_dki_kfa_volume_scd <-
     x = expression(Volume~(mm^3)),
     title = "Left Amygdala Volume",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -472,7 +439,7 @@ plot_glm_left_amygdala_dki_kfa_fit_NDI_scd <-
   labs(
     title = "Left Amygdala Mean NDI",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -491,7 +458,7 @@ plot_glm_left_amygdala_dki_kfa_fit_ODI_scd <-
   labs(
     title = "Left Amygdala Mean ODI",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -510,7 +477,7 @@ plot_glm_left_amygdala_dki_kfa_fit_FWF_scd <-
   labs(
     title = "Left Amygdala Mean FWF",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -527,6 +494,73 @@ left_amygdala_dki_kfa_bio_plots <- plot_glm_left_amygdala_dki_kfa_volume_scd +
 ggsave(filename = "left_amygdala_dki_kfa_bio_plots.tif", left_amygdala_dki_kfa_bio_plots,
        width = 6.5, height = 5.5, dpi = 600, units = "in", device='tiff')
 
+glm_left_amygdala_fit_FWF_volume_scd <- lm(fit_FWF ~ volume, left_amygdala_scd)
+summary(glm_left_amygdala_fit_FWF_volume_scd)
+corr_p_value <- summary(glm_left_amygdala_fit_FWF_volume_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_fit_FWF_volume_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_fit_FWF_volume_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_fit_FWF_volume_scd, c( "volume[all]"))
+plot_glm_left_amygdala_fit_FWF_volume_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    x = expression(Volume~(mm^3)),
+    title = "Left Amygdala Volume",
+    subtitle = paste0(
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+      " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
+      ", \u03B2: ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+glm_left_amygdala_fit_FWF_fit_NDI_scd <- lm(fit_FWF ~ fit_NDI, left_amygdala_scd)
+summary(glm_left_amygdala_fit_FWF_fit_NDI_scd)
+corr_p_value <- summary(glm_left_amygdala_fit_FWF_fit_NDI_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_fit_FWF_fit_NDI_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_fit_FWF_fit_NDI_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_fit_FWF_fit_NDI_scd, c( "fit_NDI[all]"))
+plot_glm_left_amygdala_fit_FWF_fit_NDI_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    title = "Left Amygdala Mean NDI",
+    subtitle = paste0(
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+      " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
+      ", \u03B2: ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+glm_left_amygdala_fit_FWF_fit_ODI_scd <- lm(fit_FWF ~ fit_ODI, left_amygdala_scd)
+summary(glm_left_amygdala_fit_FWF_fit_ODI_scd)
+corr_p_value <- summary(glm_left_amygdala_fit_FWF_fit_ODI_scd)$coefficients[2,4]
+corr_beta <- summary(glm_left_amygdala_fit_FWF_fit_ODI_scd)$coefficients[2,1]
+adj_r_squared <- summary(glm_left_amygdala_fit_FWF_fit_ODI_scd)$adj.r.squared
+pr <- predict_response(glm_left_amygdala_fit_FWF_fit_ODI_scd, c( "fit_ODI[all]"))
+plot_glm_left_amygdala_fit_FWF_fit_ODI_scd <- 
+  plot(pr, show_data = T, dot_alpha = 1, dot_size = 0.5) + 
+  labs(
+    title = "Left Amygdala Mean ODI",
+    subtitle = paste0(
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+      " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
+      ", \u03B2: ", signif(corr_beta, 2),
+      ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
+  theme_bw(base_size = 10) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+        legend.title=element_blank())
+
+left_amygdala_fit_FWF_bio_plots <- plot_glm_left_amygdala_fit_FWF_volume_scd + 
+  plot_glm_left_amygdala_fit_FWF_fit_NDI_scd + 
+  plot_glm_left_amygdala_fit_FWF_fit_ODI_scd + 
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(tag_levels = "a")
+ggsave(filename = "left_amygdala_fit_FWF_bio_plots.tif", left_amygdala_fit_FWF_bio_plots,
+       width = 6.5, height = 5.5, dpi = 600, units = "in", device='tiff')
+
 glm_right_amygdala_dki_kfa_volume_scd <- lm(dki_kfa ~ volume, right_amygdala_scd)
 summary(glm_right_amygdala_dki_kfa_volume_scd)
 corr_p_value <- summary(glm_right_amygdala_dki_kfa_volume_scd)$coefficients[2,4]
@@ -539,7 +573,7 @@ plot_glm_right_amygdala_dki_kfa_volume_scd <-
     x = expression(Volume~(mm^3)),
     title = "Right Amygdala Volume",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -558,7 +592,7 @@ plot_glm_right_amygdala_dki_kfa_fit_NDI_scd <-
   labs(
     title = "Right Amygdala Mean NDI",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -577,7 +611,7 @@ plot_glm_right_amygdala_dki_kfa_fit_ODI_scd <-
   labs(
     title = "Right Amygdala Mean ODI",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -596,7 +630,7 @@ plot_glm_right_amygdala_dki_kfa_fit_FWF_scd <-
   labs(
     title = "Right Amygdala Mean FWF",
     subtitle = paste0(
-      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+      symnum(corr_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
       " p: ", format.pval(corr_p_value, digits = 2, eps = 0.001),
       ", \u03B2: ", signif(corr_beta, 2),
       ", adj-R<sup>2</sup>: ", signif(adj_r_squared, 2))) +
@@ -632,42 +666,42 @@ ctl_p_value <- summary(glm_left_amygdala_dti_fa_age_ctl)$coefficients[2,4]
 ctl_beta <- summary(glm_left_amygdala_dti_fa_age_ctl)$coefficients[2,1]
 ctl_adj_r_squared <- summary(glm_left_amygdala_dti_fa_age_ctl)$adj.r.squared
 plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_fa_age_int, pred = age, modx = Group, point.alpha = 1,
-                            plot.points = T, interval = T, point.size = 0.5, point.shape = T, colors = c("black", "gray50")) +
+                                                         plot.points = T, interval = T, point.size = 0.5, point.shape = T, colors = c("black", "gray50")) +
   labs(
     y = "FA", x = "Age (Years)", title = "Left Amygdala Mean FA", fill = "Group",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
-                      )
-    ) +
+    )
+  ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
-                    label = paste0(
-                      symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(scd_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
-                      ),
-                    color = "SCD"), 
+                     label = paste0(
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(scd_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
+                     ),
+                     color = "SCD"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
-                ) +
+  ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
-                    label = paste0(
-                      symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(ctl_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
-                    ),
-                    color = "Control"), 
+                     label = paste0(
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(ctl_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
+                     ),
+                     color = "Control"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
-                ) +
+  ) +
   ylim(NA,0.27) +
   theme_bw(base_size = 10, ) +
   theme(plot.title = element_text(hjust = 0.5),
@@ -695,35 +729,35 @@ plot_left_amygdala_fit_FWF <- interactions::interact_plot(glm_left_amygdala_fit_
   labs(
     y = "FWF", x = "Age (Years)", title = "Left Amygdala Mean FWF",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
-                    label = paste0(
-                      symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(scd_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
-                    ),
-                    color = "SCD"), 
+                     label = paste0(
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(scd_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
+                     ),
+                     color = "SCD"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
-                    label = paste0(
-                      symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(ctl_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
-                    ),
-                    color = "Control"), 
+                     label = paste0(
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(ctl_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
+                     ),
+                     color = "Control"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
@@ -754,35 +788,35 @@ plot_left_amygdala_dki_kfa <- interactions::interact_plot(glm_left_amygdala_dki_
   labs(
     y = "KFA", x = "Age (Years)", title = "Left Amygdala Mean KFA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
-                    label = paste0(
-                      symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(scd_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
-                    ),
-                    color = "SCD"), 
+                     label = paste0(
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(scd_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
+                     ),
+                     color = "SCD"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
-                    label = paste0(
-                      symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(ctl_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
-                    ),
-                    color = "Control"), 
+                     label = paste0(
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(ctl_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
+                     ),
+                     color = "Control"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
@@ -813,35 +847,35 @@ plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dk
   labs(
     y = "KFA", x = "Age (Years)", title = "Right Amygdala Mean KFA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
-                    label = paste0(
-                      symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(scd_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
-                    ),
-                    color = "SCD"), 
+                     label = paste0(
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(scd_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
+                     ),
+                     color = "SCD"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
-                    label = paste0(
-                      symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(ctl_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
-                    ),
-                    color = "Control"), 
+                     label = paste0(
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(ctl_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
+                     ),
+                     color = "Control"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
@@ -879,6 +913,11 @@ summary(clm_right_amygdala_dki_kfa_depression_ctl)
 ctl_p_value <- summary(clm_right_amygdala_dki_kfa_depression_ctl)$coefficients["dki_kfa", "Pr(>|z|)"]
 ctl_beta <- summary(clm_right_amygdala_dki_kfa_depression_ctl)$coefficients["dki_kfa", "Estimate"]
 ctl_odds_ratio <- exp(ctl_beta)
+marginaleffects::plot_predictions(clm_right_amygdala_dki_kfa_depression_int, type = "prob", condition = "dki_kfa")
+predict_response(clm_right_amygdala_dki_kfa_depression_int, c("dki_kfa", "Group")) %>% plot()
+
+ggplot(right_amygdala, aes(dti_fa, additional_hads_anxiety, color=Group)) +
+  geom_point()
 
 glm_left_amygdala_dti_fa_anxiety_int <- lm(dti_fa ~ additional_hads_anxiety * Group, left_amygdala)
 summary(glm_left_amygdala_dti_fa_anxiety_int)
@@ -902,35 +941,35 @@ plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_f
   labs(
     y = "FA", x = "Anxiety (HADS)", title = "Left Amygdala Mean FA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
-                    label = paste0(
-                      symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(scd_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
-                    ),
-                    color = "SCD"), 
+                     label = paste0(
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(scd_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
+                     ),
+                     color = "SCD"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
-                    label = paste0(
-                      symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(ctl_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
-                    ),
-                    color = "Control"), 
+                     label = paste0(
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(ctl_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
+                     ),
+                     color = "Control"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
@@ -960,35 +999,35 @@ plot_left_amygdala_fit_FWF <- interactions::interact_plot(glm_left_amygdala_fit_
   labs(
     y = "FWF", x = "Anxiety (HADS)", title = "Left Amygdala Mean FWF",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
-                    label = paste0(
-                      symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(scd_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
-                    ),
-                    color = "SCD"), 
+                     label = paste0(
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(scd_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
+                     ),
+                     color = "SCD"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
-                    label = paste0(
-                      symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(ctl_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
-                    ),
-                    color = "Control"), 
+                     label = paste0(
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(ctl_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
+                     ),
+                     color = "Control"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
@@ -1020,35 +1059,35 @@ plot_left_amygdala_dki_kfa <- interactions::interact_plot(glm_left_amygdala_dki_
   labs(
     y = "KFA", x = "Anxiety (HADS)", title = "Left Amygdala Mean KFA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
-                    label = paste0(
-                      symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(scd_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
-                    ),
-                    color = "SCD"), 
+                     label = paste0(
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(scd_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
+                     ),
+                     color = "SCD"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
-                    label = paste0(
-                      symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(ctl_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
-                    ),
-                    color = "Control"), 
+                     label = paste0(
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(ctl_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
+                     ),
+                     color = "Control"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
@@ -1079,35 +1118,35 @@ plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dk
   labs(
     y = "KFA", x = "Anxiety (HADS)", title = "Right Amygdala Mean KFA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
-                    label = paste0(
-                      symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(scd_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
-                    ),
-                    color = "SCD"), 
+                     label = paste0(
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(scd_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
+                     ),
+                     color = "SCD"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
-                    label = paste0(
-                      symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
-                      " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
-                      ", \u03B2: ", signif(ctl_beta, 2),
-                      ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
-                    ),
-                    color = "Control"), 
+                     label = paste0(
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+                       " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
+                       ", \u03B2: ", signif(ctl_beta, 2),
+                       ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
+                     ),
+                     color = "Control"), 
                 show.legend = F, size = 3, fill = NA, label.color = NA, 
                 label.padding = grid::unit(rep(0,4), "pt")
   ) +
@@ -1150,19 +1189,19 @@ plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_f
   labs(
     y = "FA", x = "Depression (HADS)", title = "Left Amygdala Mean FA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
                      label = paste0(
-                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(scd_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
@@ -1173,7 +1212,7 @@ plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_f
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                      label = paste0(
-                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(ctl_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
@@ -1208,19 +1247,19 @@ plot_left_amygdala_fit_FWF <- interactions::interact_plot(glm_left_amygdala_fit_
   labs(
     y = "FWF", x = "Depression (HADS)", title = "Left Amygdala Mean FWF",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
                      label = paste0(
-                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(scd_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
@@ -1231,7 +1270,7 @@ plot_left_amygdala_fit_FWF <- interactions::interact_plot(glm_left_amygdala_fit_
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                      label = paste0(
-                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(ctl_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
@@ -1268,19 +1307,19 @@ plot_left_amygdala_dki_kfa <- interactions::interact_plot(glm_left_amygdala_dki_
   labs(
     y = "KFA", x = "Depression (HADS)", title = "Left Amygdala Mean KFA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
                      label = paste0(
-                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(scd_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
@@ -1291,7 +1330,7 @@ plot_left_amygdala_dki_kfa <- interactions::interact_plot(glm_left_amygdala_dki_
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                      label = paste0(
-                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(ctl_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
@@ -1327,19 +1366,19 @@ plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dk
   labs(
     y = "KFA", x = "Depression (HADS)", title = "Right Amygdala Mean KFA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
                      label = paste0(
-                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(scd_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
@@ -1350,7 +1389,7 @@ plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dk
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                      label = paste0(
-                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(ctl_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
@@ -1398,19 +1437,19 @@ plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_f
   labs(
     y = "FA", x = "Memory (# Details)", title = "Left Amygdala Mean FA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
                      label = paste0(
-                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(scd_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
@@ -1421,7 +1460,7 @@ plot_left_amygdala_dti_fa <- interactions::interact_plot(glm_left_amygdala_dti_f
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                      label = paste0(
-                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(ctl_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
@@ -1456,19 +1495,19 @@ plot_left_amygdala_fit_FWF <- interactions::interact_plot(glm_left_amygdala_fit_
   labs(
     y = "FWF", x = "Memory (# Details)", title = "Left Amygdala Mean FWF",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
                      label = paste0(
-                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(scd_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
@@ -1479,7 +1518,7 @@ plot_left_amygdala_fit_FWF <- interactions::interact_plot(glm_left_amygdala_fit_
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                      label = paste0(
-                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(ctl_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
@@ -1516,19 +1555,19 @@ plot_left_amygdala_dki_kfa <- interactions::interact_plot(glm_left_amygdala_dki_
   labs(
     y = "KFA", x = "Memory (# Details)", title = "Left Amygdala Mean KFA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
                      label = paste0(
-                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(scd_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
@@ -1539,7 +1578,7 @@ plot_left_amygdala_dki_kfa <- interactions::interact_plot(glm_left_amygdala_dki_
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                      label = paste0(
-                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(ctl_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
@@ -1575,19 +1614,19 @@ plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dk
   labs(
     y = "KFA", x = "Memory (# Details)", title = "Right Amygdala Mean KFA",
     subtitle = paste0("across group ", 
-                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(across_group_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(across_group_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(across_group_beta, 2),
                       "<br> adj-R<sup>2</sup>: ", signif(across_group_adj_r_squared, 2),
                       "<br> interaction ",
-                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                      symnum(int_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                       " p: ", format.pval(int_p_value, digits = 2, eps = 0.001),
                       ", \u03B2: ", signif(int_beta, 2)
     )
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 1.1, hjust = 1.01,
                      label = paste0(
-                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(scd_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(scd_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(scd_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(scd_adj_r_squared, 2)
@@ -1598,7 +1637,7 @@ plot_right_amygdala_dki_kfa <- interactions::interact_plot(glm_right_amygdala_dk
   ) +
   geom_richtext(aes_(x = Inf, y = Inf, vjust = 2.5, hjust = 1.01,
                      label = paste0(
-                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .05, 1), symbols = c("***", "**", "\\*", "")),
+                       symnum(ctl_p_value, corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
                        " p: ", format.pval(ctl_p_value, digits = 2, eps = 0.001),
                        ", \u03B2: ", signif(ctl_beta, 2),
                        ", adj-R<sup>2</sup>: ", signif(ctl_adj_r_squared, 2)
@@ -1635,12 +1674,12 @@ right_imaging_matrix <- right_amygdala %>%
   rename_with( ~ paste0(.x, "_right"))
 imaging_matrix <- cbind(left_imaging_matrix, right_imaging_matrix)
 corr_matrix_pearson <- psych::corr.test(scd_status_matrix, imaging_matrix, use = "pairwise.complete.obs", 
-                                adjust = "fdr")
+                                        adjust = "fdr")
 corr_pearson <- as.data.frame(corr_matrix_pearson$r)
 corr_pearson <- tibble::rownames_to_column(corr_pearson, "behav_demo_metric")
 corr_pearson_long <- corr_pearson %>%
   pivot_longer( cols = !behav_demo_metric,
-    names_to = "diffusion_metric", values_to = "Pearson")
+                names_to = "diffusion_metric", values_to = "Pearson")
 corr_pearson_p <- as.data.frame(corr_matrix_pearson$p) %>%
   mutate(across(everything(), ~ format.pval(.x, digits = 2, eps = 0.001)))
 corr_pearson_p <- tibble::rownames_to_column(corr_pearson_p, "behav_demo_metric")
@@ -1657,7 +1696,7 @@ corr_pearson_p_adj_long <- corr_pearson_p_adj %>%
 corr_pearson_long <- left_join(corr_pearson_long, corr_pearson_p_adj_long)
 
 corr_matrix_spearman <- psych::corr.test(scd_status_matrix, imaging_matrix, use = "pairwise.complete.obs",
-                                              method = "spearman", adjust = "fdr")
+                                         method = "spearman", adjust = "fdr")
 corr_spearman <- as.data.frame(corr_matrix_spearman$r)
 corr_spearman <- tibble::rownames_to_column(corr_spearman, "behav_demo_metric")
 corr_spearman_long <- corr_spearman %>%
@@ -1686,14 +1725,14 @@ corrplot::corrplot(corr_matrix_spearman$r, p.mat = corr_matrix_spearman$p, metho
 
 #scd_only
 scd_status_matrix <- scd_status %>% 
-  filter(Group == "SCD") %>%
+  filter(SCD == "SCD") %>%
   select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
 left_imaging_matrix <- left_amygdala %>% 
-  filter(Group == "SCD") %>%
+  filter(SCD == "SCD") %>%
   select(dti_fa, fit_FWF, dki_kfa) %>%
   rename_with( ~ paste0(.x, "_left"))
 right_imaging_matrix <- right_amygdala %>% 
-  filter(Group == "SCD") %>%
+  filter(SCD == "SCD") %>%
   select(dki_kfa) %>%
   rename_with( ~ paste0(.x, "_right"))
 imaging_matrix <- cbind(left_imaging_matrix, right_imaging_matrix)
@@ -1750,14 +1789,14 @@ corrplot::corrplot(corr_matrix_spearman$r, p.mat = corr_matrix_spearman$p, metho
 
 #ctl_only
 scd_status_matrix <- scd_status %>% 
-  filter(Group == "Control") %>%
+  filter(SCD == "Control") %>%
   select(age, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression)
 left_imaging_matrix <- left_amygdala %>% 
-  filter(Group == "Control") %>%
+  filter(SCD == "Control") %>%
   select(dti_fa, fit_FWF, dki_kfa) %>%
   rename_with( ~ paste0(.x, "_left"))
 right_imaging_matrix <- right_amygdala %>% 
-  filter(Group == "Control") %>%
+  filter(SCD == "Control") %>%
   select(dki_kfa) %>%
   rename_with( ~ paste0(.x, "_right"))
 imaging_matrix <- cbind(left_imaging_matrix, right_imaging_matrix)
@@ -1783,7 +1822,7 @@ corr_pearson_p_adj_long <- corr_pearson_p_adj %>%
                 names_to = "diffusion_metric", values_to = "Pearson q value")
 corr_pearson_long <- left_join(corr_pearson_long, corr_pearson_p_adj_long)
 
-corr_matrix_spearman <- psych::corr.test(scd_status_matrix, imaging_matrix, use = "pairwise.complete.obs",
+corr_matrix_spearman <- psych::corr.test(Control_status_matrix, imaging_matrix, use = "pairwise.complete.obs",
                                          method = "spearman", adjust = "fdr")
 corr_spearman <- as.data.frame(corr_matrix_spearman$r)
 corr_spearman <- tibble::rownames_to_column(corr_spearman, "behav_demo_metric")
@@ -1810,3 +1849,27 @@ tinytable::tt(corr_table, digits = 2, caption = "Control Only")
 
 corrplot::corrplot(corr_matrix_spearman$r, p.mat = corr_matrix_spearman$p, method = 'color',
                    sig.level = c(0.001, 0.01, 0.05), insig = 'label_sig', pch.cex = 0.9)
+
+#shapiro-wilk test for normality. if violated, can argue data is sufficiently large
+#so violation is trivial or transform dependent variable (ie box-cox transform or log transform)
+#homogeneity assumption plot residual and y-hat. can use square root or log transform if violated
+#levene's test, aka equal variance
+#proc transreg procedure: explore different transformation methods
+
+shapiro.test(log(left_amygdala$dti_fa))
+shapiro.test(log(left_amygdala$fit_FWF))
+shapiro.test(log(left_amygdala$dki_kfa))
+shapiro.test(1/right_amygdala$dki_kfa)
+
+new_model <- lm(sqrt(additional_hads_anxiety) ~ dti_fa * Group, data = left_amygdala)
+qqnorm(glm_right_amygdala_dki_kfa_anxiety_int$residuals)
+qqline(glm_right_amygdala_dki_kfa_anxiety_int$residuals)
+qqnorm(new_model$residuals)
+qqline(new_model$residuals)
+
+library(car)
+leveneTest(dti_fa ~ Group, left_amygdala)
+leveneTest(fit_FWF ~ Group, left_amygdala)
+leveneTest(dki_kfa ~ Group, left_amygdala)
+leveneTest(dki_kfa ~ Group, right_amygdala)
+leveneTest(sqrt(additional_hads_anxiety) ~ Group, left_amygdala)
