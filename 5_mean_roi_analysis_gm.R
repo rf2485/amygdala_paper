@@ -5,54 +5,9 @@ library(gtsummary)
 library(ggeffects)
 library(ggtext)
 library(patchwork)
+library(corrplot)
 
 
-
-######### Generate Figure of Amygdala Segmentations ##########
-#images generated with FreeSurfer screenshot GUI
-t1_ss <- tiff::readTIFF("t1 amygdala.tiff")
-fa_ss <- tiff::readTIFF("fa amygdala.tiff")
-md_ss <- tiff::readTIFF("md amygdala.tiff")
-kfa_ss <- tiff::readTIFF("kfa amygdala.tiff")
-mk_ss <- tiff::readTIFF("mk amygdala.tiff")
-fwf_ss <- tiff::readTIFF("fwf amygdala.tiff")
-ndi_ss <- tiff::readTIFF("ndi amygdala.tiff")
-odi_ss <- tiff::readTIFF("odi amygdala.tiff")
-
-figure_1 <- cowplot::plot_grid(t1_ss, fa_ss, labels = c("a", "b"))
-
-ggsave(filename = "figure_1.tif", figure_1,
-       width = 7.5, height = 7.5, dpi = 1200, units = "in", device='tiff') 
-
-fa_ss <- cowplot::ggdraw() + cowplot::draw_image("fa amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-md_ss <- cowplot::ggdraw() + cowplot::draw_image("md amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-kfa_ss <- cowplot::ggdraw() + cowplot::draw_image("kfa amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-mk_ss <- cowplot::ggdraw() + cowplot::draw_image("mk amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-fwf_ss <- cowplot::ggdraw() + cowplot::draw_image("fwf amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-ndi_ss <- cowplot::ggdraw() + cowplot::draw_image("ndi amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-odi_ss <- cowplot::ggdraw() + cowplot::draw_image("odi amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-t1_ss <- cowplot::ggdraw() + cowplot::draw_image("t1 amygdala.tiff") + theme(plot.margin = unit(c(0,0,1,0), "cm"))
-
-
-cowplot::plot_grid(fa_ss, md_ss, kfa_ss, mk_ss, fwf_ss, ndi_ss, odi_ss, t1_ss,
-                   nrow = 4, labels = "auto", scale = 0.9)
-
-(fa_ss | md_ss) / (kfa_ss | mk_ss) / (fwf_ss | ndi_ss) / (odi_ss | t1_ss) +
-  plot_layout(guides = "collect") +
-  plot_annotation(tag_levels = "a")
-
-(fa_ss | md_ss) / plot_spacer() / 
-  (kfa_ss | mk_ss) / plot_spacer() / 
-  (fwf_ss | ndi_ss) / plot_spacer() /
-  (odi_ss | t1_ss) +
-  plot_layout(guides = "collect", 
-              widths = c(1,1,2,1,1,2,1,1)) +
-  plot_annotation(tag_levels = "a")
-ggsave(filename = "figure_1.tif", figure_1,
-       width = 7.5, height = 7.5, dpi = 1200, units = "in", device='tiff') 
-
-
-######### subcort GM #################
 failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
                'sub-CC510438', #CTL abnormality in left frontal lobe
                'sub-CC620821', #SCD segmentation errors from large ventricles
@@ -61,30 +16,6 @@ failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
                'sub-CC710551', #CTL motion artifacts in DWI
                'sub-CC711027', #SCD severe motion artifacts in T1
                'sub-CC721434'  #CTL segmentation errors from large ventricles
-)
-
-subcort_gm <- c("SCD", "Left.Thalamus", "Right.Thalamus", "Left.Caudate", "Right.Caudate",
-                "Left.Putamen", "Right.Putamen", "Left.Pallidum", "Right.Pallidum",
-                "Left.Hippocampus", "Right.Hippocampus", "Left.Amygdala", "Right.Amygdala",
-                "Left.Accumbens.area", "Right.Accumbens.area", "Left.VentralDC", "Right.VentralDC")
-
-subcort_labels <- list(
-  Left.Thalamus ~ "Left Thalamus",
-  Right.Thalamus ~ "Right Thalamus",
-  Left.Caudate ~ "Left Caudate",
-  Right.Caudate ~ "Right Caudate",
-  Left.Putamen ~ "Left Putamen",
-  Right.Putamen ~ "Right Putamen",
-  Left.Pallidum ~ "Left Pallidum",
-  Right.Pallidum ~ "Right Pallidum",
-  Left.Hippocampus ~ "Left Hippocampus",
-  Right.Hippocampus ~ "Right Hippocampus",
-  Left.Amygdala ~ "Left Amygdala",
-  Right.Amygdala ~ "Right Amygdala",
-  Left.Accumbens.area ~ "Left Accumbens Area",
-  Right.Accumbens.area ~ "Right Accumbens Area",
-  Left.VentralDC ~ "Left Ventral Diencephalon",
-  Right.VentralDC ~ "Right Ventral Diencephalon"
 )
 
 my_ES_test <- function(data, variable, by, ...) {
@@ -288,8 +219,7 @@ right_amygdala <- set_label(right_amygdala,
 left_amygdala %>% 
   select(-participant_id) %>% 
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(volume, dti_fa, dti_md, dki_kfa, dki_mk, 
-                          fit_FWF, fit_NDI, fit_ODI)
+              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
@@ -298,13 +228,12 @@ left_amygdala %>%
                 label ~ "**Imaging Metric**",
                 estimate ~ "**Effect Size**") %>%
   as_gt() %>%
-  gt::gtsave(filename = "left_amygdala_table.docx")
+  gt::gtsave(filename = "left_amygdala_dti_dki_table.docx")
 
 right_amygdala %>% 
   select(-participant_id) %>% 
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(volume, dti_fa, dti_md, dki_kfa, dki_mk, 
-                          fit_FWF, fit_NDI, fit_ODI)
+              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
@@ -313,7 +242,38 @@ right_amygdala %>%
                 label ~ "**Imaging Metric**",
                 estimate ~ "**Effect Size**") %>%
   as_gt() %>%
-  gt::gtsave(filename = "right_amygdala_table.docx")
+  gt::gtsave(filename = "right_amygdala_dti_dki_table.docx")
+
+#### Within SCD correlations between DTI, DKI, volume, and NODDI ####
+left_dti_dki_matrix <- left_amygdala %>% 
+  filter(Group == "SCD") %>%
+  select(dti_fa, dki_kfa) %>%
+  rename_with( ~ paste0(.x, "_left"))
+right_dti_dki_matrix <- right_amygdala %>% 
+  filter(Group == "SCD") %>%
+  select(dki_kfa) %>%
+  rename_with( ~ paste0(.x, "_right"))
+dti_dki_matrix <- cbind(left_dti_dki_matrix, right_dti_dki_matrix)
+
+left_vol_noddi_matrix <- left_amygdala %>%
+  filter(Group == "SCD") %>%
+  select(volume, fit_NDI, fit_FWF, fit_ODI) %>%
+  rename_with( ~ paste0(.x, "_left"))
+right_vol_noddi_matrix <- right_amygdala %>%
+  filter(Group == "SCD") %>%
+  select(volume, fit_NDI, fit_FWF, fit_ODI) %>%
+  rename_with( ~ paste0(.x, "_right"))
+vol_noddi_matrix <- cbind(left_vol_noddi_matrix, right_vol_noddi_matrix)
+
+trace(corrplot, edit = T) #change line 447 to text(pos.pNew[, 1][sig.locs], (pos.pNew[, 2][sig.locs])+0.25, 
+corr_matrix_pearson <- psych::corr.test(dti_dki_matrix, vol_noddi_matrix)
+colnames(corr_matrix_pearson$r) <- c("Left Volume", "Left NDI", "Left FWF", "Left ODI",
+                                   "Right Volume", "Right NDI", "Right FWF", "Right ODI")
+
+corrplot(corr_matrix_pearson$r, p.mat = corr_matrix_pearson$p, method = 'color',
+         addCoef.col = "black",
+                   sig.level = c(0.001, 0.01, 0.025), insig = 'label_sig', pch.cex = 0.9)
+
 
 ##### Scatterplots of Linear Models ######
 left_amygdala_ctl <- left_amygdala %>% filter(Group == "Control")
