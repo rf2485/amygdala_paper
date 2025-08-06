@@ -321,11 +321,11 @@ trace(corrplot, edit = T) #change line 446 to text(pos.pNew[, 1][sig.locs], (pos
 
 left_dti_dki_matrix <- left_amygdala %>% 
   filter(Group == "SCD") %>%
-  select(dti_fa, dki_kfa) %>%
+  select(dti_fa, dti_md, dki_mk, dki_kfa) %>%
   rename_with( ~ paste0(.x, "_left"))
 right_dti_dki_matrix <- right_amygdala %>% 
   filter(Group == "SCD") %>%
-  select(dki_kfa) %>%
+  select(dti_fa, dti_md, dki_mk, dki_kfa) %>%
   rename_with( ~ paste0(.x, "_right"))
 dti_dki_matrix <- cbind(left_dti_dki_matrix, right_dti_dki_matrix)
 
@@ -340,40 +340,51 @@ right_vol_noddi_matrix <- right_amygdala %>%
 vol_noddi_matrix <- cbind(left_vol_noddi_matrix, right_vol_noddi_matrix)
 
 corr_matrix_pearson <- psych::corr.test(dti_dki_matrix, vol_noddi_matrix)
-colnames(corr_matrix_pearson$r) <- c("Left Volume", "Left NDI", "Left FWF", "Left ODI",
-                                   "Right Volume", "Right NDI", "Right FWF", "Right ODI")
+right_corr_matrix_pearson <- psych::corr.test(right_dti_dki_matrix, right_vol_noddi_matrix)
+right_corr_matrix_spearman <- psych::corr.test(right_dti_dki_matrix, right_vol_noddi_matrix,
+                                               method = "spearman")
+left_corr_matrix_pearson <- psych::corr.test(left_dti_dki_matrix, left_vol_noddi_matrix)
+left_corr_matrix_spearman <- psych::corr.test(left_dti_dki_matrix, left_vol_noddi_matrix,
+                                               method = "spearman")
 
-corrplot(corr_matrix_pearson$r, p.mat = corr_matrix_pearson$p, method = 'color',
+# colnames(corr_matrix_pearson$r) <- c("Left Volume", "Left NDI", "Left FWF", "Left ODI",
+                                   # "Right Volume", "Right NDI", "Right FWF", "Right ODI")
+
+corrplot(left_corr_matrix_pearson$r, p.mat = left_corr_matrix_pearson$p, method = 'color',
          addCoef.col = "black",
                    sig.level = c(0.001, 0.01, 0.025), insig = 'label_sig', pch.cex = 0.9)
 
-left_dti_dki_matrix <- left_amygdala_10mq_thresh %>% 
-  filter(Group == "SCD") %>%
-  select(dti_fa, dki_kfa) %>%
-  rename_with( ~ paste0(.x, "_left"))
-right_dti_dki_matrix <- right_amygdala_10mq_thresh %>% 
-  filter(Group == "SCD") %>%
-  select(dki_kfa) %>%
-  rename_with( ~ paste0(.x, "_right"))
-dti_dki_matrix <- cbind(left_dti_dki_matrix, right_dti_dki_matrix)
-
-left_vol_noddi_matrix <- left_amygdala_10mq_thresh %>%
-  filter(Group == "SCD") %>%
-  select(volume, fit_NDI, fit_FWF, fit_ODI) %>%
-  rename_with( ~ paste0(.x, "_left"))
-right_vol_noddi_matrix <- right_amygdala_10mq_thresh %>%
-  filter(Group == "SCD") %>%
-  select(volume, fit_NDI, fit_FWF, fit_ODI) %>%
-  rename_with( ~ paste0(.x, "_right"))
-vol_noddi_matrix <- cbind(left_vol_noddi_matrix, right_vol_noddi_matrix)
-
-corr_matrix_pearson <- psych::corr.test(dti_dki_matrix, vol_noddi_matrix)
-colnames(corr_matrix_pearson$r) <- c("Left Volume", "Left NDI", "Left FWF", "Left ODI",
-                                     "Right Volume", "Right NDI", "Right FWF", "Right ODI")
-
-corrplot(corr_matrix_pearson$r, p.mat = corr_matrix_pearson$p, method = 'color',
+corrplot(left_corr_matrix_spearman$r, p.mat = left_corr_matrix_spearman$p, method = 'color',
          addCoef.col = "black",
          sig.level = c(0.001, 0.01, 0.025), insig = 'label_sig', pch.cex = 0.9)
+
+# left_dti_dki_matrix <- left_amygdala_10mq_thresh %>% 
+#   filter(Group == "SCD") %>%
+#   select(dti_fa, dki_kfa) %>%
+#   rename_with( ~ paste0(.x, "_left"))
+# right_dti_dki_matrix <- right_amygdala_10mq_thresh %>% 
+#   filter(Group == "SCD") %>%
+#   select(dki_kfa) %>%
+#   rename_with( ~ paste0(.x, "_right"))
+# dti_dki_matrix <- cbind(left_dti_dki_matrix, right_dti_dki_matrix)
+# 
+# left_vol_noddi_matrix <- left_amygdala_10mq_thresh %>%
+#   filter(Group == "SCD") %>%
+#   select(volume, fit_NDI, fit_FWF, fit_ODI) %>%
+#   rename_with( ~ paste0(.x, "_left"))
+# right_vol_noddi_matrix <- right_amygdala_10mq_thresh %>%
+#   filter(Group == "SCD") %>%
+#   select(volume, fit_NDI, fit_FWF, fit_ODI) %>%
+#   rename_with( ~ paste0(.x, "_right"))
+# vol_noddi_matrix <- cbind(left_vol_noddi_matrix, right_vol_noddi_matrix)
+# 
+# corr_matrix_pearson <- psych::corr.test(dti_dki_matrix, vol_noddi_matrix)
+# colnames(corr_matrix_pearson$r) <- c("Left Volume", "Left NDI", "Left FWF", "Left ODI",
+#                                      "Right Volume", "Right NDI", "Right FWF", "Right ODI")
+# 
+# corrplot(corr_matrix_pearson$r, p.mat = corr_matrix_pearson$p, method = 'color',
+#          addCoef.col = "black",
+#          sig.level = c(0.001, 0.01, 0.025), insig = 'label_sig', pch.cex = 0.9)
 
 ### Between Groups Volume and NODDI Differences ###
 left_amygdala %>% 
@@ -536,7 +547,7 @@ plot_right_amygdala_dki_kfa_age_int <- interactions::interact_plot(glm_right_amy
   theme(plot.subtitle = element_markdown())
 
 ggsave(filename = "kfa_age_int_plot.tif", plot_right_amygdala_dki_kfa_age_int,
-       width = 5, height = 3, dpi = 600, units = "in", device = "tiff")
+       width = 4, height = 3, dpi = 600, units = "in", device = "tiff")
 
 right_amygdala_ctl <- right_amygdala %>% filter(Group == "Control")
 right_amygdala_scd <- right_amygdala %>% filter(Group == "SCD")
@@ -575,6 +586,29 @@ glm_right_amygdala_dki_kfa_additional_hads_anxiety_int <- lm(dki_kfa ~ additiona
 summary(glm_right_amygdala_dki_kfa_additional_hads_anxiety_int)
 glm_right_amygdala_dki_kfa_additional_hads_anxiety_int <- lm(dki_kfa ~ additional_hads_anxiety * Group, right_amygdala_10mq_thresh)
 summary(glm_right_amygdala_dki_kfa_additional_hads_anxiety_int)
+
+plot_left_amygdala_dti_fa_additional_hads_anxiety_int <- interactions::interact_plot(glm_left_amygdala_dti_fa_additional_hads_anxiety_int, pred = additional_hads_anxiety, modx = Group, point.alpha = 1,
+                                                                   plot.points = T, interval = T, point.size = 0.1, point.shape = T, colors = c("black", "gray50")) +
+  labs(
+    y = "Left Amygdala FA", x = "Anxiety (HADS)",
+    subtitle = paste0(
+      symnum(summary(glm_left_amygdala_dti_fa_additional_hads_anxiety_int)$coefficients[4,4], corr = F, cutpoints = c(0, .001, .01, .025, 1), symbols = c("***", "**", "\\*", "")),
+      " interaction p: ", format.pval(summary(glm_left_amygdala_dti_fa_additional_hads_anxiety_int)$coefficients[4,4], digits = 2, eps = 0.001))) +
+  theme_bw(base_size = 10) +
+  theme(plot.subtitle = element_markdown())
+
+ggsave(filename = "fa_anxiety_int_plot.tif", plot_left_amygdala_dti_fa_additional_hads_anxiety_int,
+       width = 4, height = 3, dpi = 600, units = "in", device = "tiff")
+
+tbl_regression(glm_left_amygdala_dti_fa_additional_hads_anxiety_int, 
+               estimate_fun = label_style_sigfig(digits = 3),
+               show_single_row = c(Group, `additional_hads_anxiety:Group`)) %>% 
+  bold_p(t=0.05) %>%
+  add_glance_table(include = c(r.squared, p.value), 
+                   label = list(p.value = "overall p-value")) %>%
+  modify_spanning_header(c(estimate, conf.low, conf.high, p.value) ~ "**Left Amygdala FA**") #%>%
+# as_gt() %>%
+# gt::gtsave(filename = "right_amygdala_dki_kfa_age_int.docx")
 
 glm_left_amygdala_dti_fa_additional_hads_depression_int <- lm(dti_fa ~ additional_hads_depression * Group, left_amygdala)
 summary(glm_left_amygdala_dti_fa_additional_hads_depression_int)
