@@ -27,39 +27,18 @@ my_cramer_v <- function(data, variable, by, ...) {
 }
 theme_gtsummary_mean_sd()
 
-### Memory Self-report within SCD ###
-scd_10mq <- dwi_over_55 %>% filter(SCD == "SCD") %>%
-  filter(!participant_id %in% failed_qc) %>%
-  select(participant_id, homeint_v231:homeint_v240) %>%
-  naniar::replace_with_na_if(.predicate = is.numeric, condition = ~.x > 4) %>%
-  mutate(ten_mq_total = rowSums(across(homeint_v231:homeint_v240), na.rm = T))
-
-hist(scd_10mq$ten_mq_total)
-median(scd_10mq$ten_mq_total)
-
 ### 3.1	Group differences between SCD and controls ###
 
 #extract SCD status and demographics for participants
 scd_status <- dwi_over_55 %>% select(participant_id, SCD, mt_tr, Income, Ethnicity, 
                                      Sex, age, age_education_completed,homeint_storyrecall_d,
-                                     additional_hads_anxiety, additional_hads_depression,
-                                     objprpos_emotional_mem, objprneu_emotional_mem, 
-                                     objprneg_emotional_mem) %>%
+                                     additional_hads_anxiety, additional_hads_depression) %>%
   filter(!participant_id %in% failed_qc) %>%
-  rename("Group" = "SCD") %>%
-  mutate(objmem_emotion_enhance = 
-           ((objprpos_emotional_mem + objprneg_emotional_mem)/2) - objprneu_emotional_mem,
-         objmem_pos_bias = objprpos_emotional_mem - objprneg_emotional_mem) %>%
-  select(!objprpos_emotional_mem, !objprneu_emotional_mem, !objprneg_emotional_mem)
+  rename("Group" = "SCD")
 scd_status$additional_hads_depression[scd_status$additional_hads_depression > 21] <- NA
-scd_status <- scd_10mq %>% select(participant_id, ten_mq_total) %>%
-  left_join(scd_status, .)
-
-scd_status_10mq_thresh <- scd_status %>%
-  filter(Group == "Control" | ten_mq_total > 10)
 
 #demographics table
-scd_status %>% select(Group, age, age_education_completed, Sex, Income, Ethnicity) %>%
+demo_table <- scd_status %>% select(Group, age, age_education_completed, Sex, Income, Ethnicity) %>%
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({min}-{max})") %>%
   # add_difference(test = list(all_continuous() ~ 'cohens_d')) %>%
   # modify_column_hide(conf.low) %>%
@@ -70,39 +49,14 @@ scd_status %>% select(Group, age, age_education_completed, Sex, Income, Ethnicit
                 add_stat_1 ~ "**Effect size**",
                 label ~ "") %>%
   bold_labels() %>%
-  modify_footnote(add_stat_1 ~ "Cohen's D; Cramer's V") %>%
-  as_gt() %>%
-  gt::gtsave(filename = "demographics_table.docx")
-
-scd_status_10mq_thresh %>% select(Group, age, age_education_completed, Sex, Income, Ethnicity) %>%
-  tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({min}-{max})") %>%
-  # add_difference(test = list(all_continuous() ~ 'cohens_d')) %>%
-  # modify_column_hide(conf.low) %>%
-  add_stat(
-    fns = list(all_continuous() ~ my_ES_test,
-               all_categorical() ~ my_cramer_v)) %>%  add_p() %>% bold_p() %>%
-  modify_header(statistic ~ "**Test Statistic**",
-                add_stat_1 ~ "**Effect size**",
-                label ~ "") %>%
-  bold_labels() %>%
-  modify_footnote(add_stat_1 ~ "Cohen's D; Cramer's V")
+  modify_footnote(add_stat_1 ~ "Cohen's D and Cramer's V; Positive effect sizes 
+                  indicate larger values in SCD.",
+                  stat_1 ~ "Mean (Min-Max); n (%); Mean (Standard Deviation)",
+                  stat_2 ~ "Mean (Min-Max); n (%); Mean (Standard Deviation)")
   
 #cog and psych table
-scd_status %>% select(Group, homeint_storyrecall_d, 
-                      additional_hads_anxiety, additional_hads_depression,
-                      objmem_emotion_enhance, objmem_pos_bias) %>%
-  tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})") %>%
-  add_difference(test = list(everything() ~ 'cohens_d')) %>%
-  modify_column_hide(conf.low) %>%
-  add_p() %>% bold_p() %>%
-  modify_header(statistic ~ "**Test Statistic**", 
-                label ~ "",
-                estimate ~ "**Effect Size**") %>%
-  bold_labels() #%>%
-  # as_gt() %>%
-  # gt::gtsave(filename = "cog_and_psych_table.docx")
-
-scd_status_10mq_thresh %>% select(Group, homeint_storyrecall_d, additional_hads_anxiety, additional_hads_depression) %>%
+cog_psych_table <- scd_status %>% select(Group, homeint_storyrecall_d, 
+                      additional_hads_anxiety, additional_hads_depression) %>%
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})") %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
@@ -111,6 +65,10 @@ scd_status_10mq_thresh %>% select(Group, homeint_storyrecall_d, additional_hads_
                 label ~ "",
                 estimate ~ "**Effect Size**") %>%
   bold_labels()
+
+tbl_stack(tbls = list(demo_table, cog_psych_table)) %>%
+  as_gt() %>%
+  gt::gtsave(filename = "demo_cog_psych_table.docx")
 
 #import aseg stats table (subcortical volumes)
 aseg <- read_tsv("freesurfer/asegtable_gm.tsv") %>%
@@ -177,7 +135,7 @@ dki_rk <- aseg2dki_rk_gm %>%
   left_join(scd_status, .) 
 
 #### focus on amygdala ####
-left_amygdala <- volumes %>% dplyr::select(participant_id:ten_mq_total, Left.Amygdala) %>%
+left_amygdala <- volumes %>% dplyr::select(participant_id:additional_hads_depression, Left.Amygdala) %>%
   rename(volume = "Left.Amygdala")
 left_amygdala <- fit_NDI %>% dplyr::select(participant_id, Left.Amygdala) %>%
   rename(fit_NDI = "Left.Amygdala") %>% full_join(left_amygdala, .)
@@ -217,10 +175,8 @@ left_amygdala <- set_label(left_amygdala,
                            dki_rk = "RK"
 )
 
-left_amygdala_10mq_thresh <- left_amygdala %>% 
-  filter(Group == "Control" | ten_mq_total > 10)
 
-right_amygdala <- volumes %>% dplyr::select(participant_id:ten_mq_total, Right.Amygdala) %>%
+right_amygdala <- volumes %>% dplyr::select(participant_id:additional_hads_depression, Right.Amygdala) %>%
   rename(volume = "Right.Amygdala")
 right_amygdala <- fit_NDI %>% dplyr::select(participant_id, Right.Amygdala) %>%
   rename(fit_NDI = "Right.Amygdala") %>% full_join(right_amygdala, .)
@@ -259,9 +215,6 @@ right_amygdala <- set_label(right_amygdala,
                             dki_ak = "AK",
                             dki_rk = "RK"
 )
-
-right_amygdala_10mq_thresh <- right_amygdala %>% 
-  filter(Group == "Control" | ten_mq_total > 10)
 
 #### between groups DTI and DKI differences ####
 left_amygdala %>% 
@@ -317,52 +270,22 @@ right_vol_noddi_matrix <- right_amygdala %>%
   rename_with( ~ paste0(.x, "_right"))
 vol_noddi_matrix <- cbind(left_vol_noddi_matrix, right_vol_noddi_matrix)
 
-corr_matrix_pearson <- psych::corr.test(dti_dki_matrix, vol_noddi_matrix)
-right_corr_matrix_pearson <- psych::corr.test(right_dti_dki_matrix, right_vol_noddi_matrix)
-right_corr_matrix_spearman <- psych::corr.test(right_dti_dki_matrix, right_vol_noddi_matrix,
-                                               method = "spearman")
 left_corr_matrix_pearson <- psych::corr.test(left_dti_dki_matrix, left_vol_noddi_matrix)
-left_corr_matrix_spearman <- psych::corr.test(left_dti_dki_matrix, left_vol_noddi_matrix,
-                                               method = "spearman")
-
-# colnames(corr_matrix_pearson$r) <- c("Left Volume", "Left NDI", "Left FWF", "Left ODI",
-                                   # "Right Volume", "Right NDI", "Right FWF", "Right ODI")
+colnames(left_corr_matrix_pearson$r) <- c("Volume", "NDI", "FWF", "ODI")
+rownames(left_corr_matrix_pearson$r) <- c("FA", "MD", "MK", "KFA")
+right_corr_matrix_pearson <- psych::corr.test(right_dti_dki_matrix, right_vol_noddi_matrix)
+colnames(right_corr_matrix_pearson$r) <- c("Volume", "NDI", "FWF", "ODI")
+rownames(right_corr_matrix_pearson$r) <- c("FA", "MD", "MK", "KFA")
 
 corrplot(left_corr_matrix_pearson$r, p.mat = left_corr_matrix_pearson$p, method = 'color',
-         addCoef.col = "black",
+         addCoef.col = "black", tl.col = "black", tl.srt = 0, tl.offset = 1,
+         title = "(a) Left Amygdala", mar = c(0,0,1,0),
          sig.level = c(0.001, 0.01, 0.03), insig = 'label_sig', pch.cex = 0.9)
 
 corrplot(right_corr_matrix_pearson$r, p.mat = right_corr_matrix_pearson$p, method = 'color',
-         addCoef.col = "black",
+         addCoef.col = "black", tl.col = "black", tl.srt = 0, tl.offset = 1, 
+         title = "(b) Right Amygdala", mar = c(0,0,1,0),
          sig.level = c(0.001, 0.01, 0.03), insig = 'label_sig', pch.cex = 0.9)
-
-# left_dti_dki_matrix <- left_amygdala_10mq_thresh %>% 
-#   filter(Group == "SCD") %>%
-#   select(dti_fa, dki_kfa) %>%
-#   rename_with( ~ paste0(.x, "_left"))
-# right_dti_dki_matrix <- right_amygdala_10mq_thresh %>% 
-#   filter(Group == "SCD") %>%
-#   select(dki_kfa) %>%
-#   rename_with( ~ paste0(.x, "_right"))
-# dti_dki_matrix <- cbind(left_dti_dki_matrix, right_dti_dki_matrix)
-# 
-# left_vol_noddi_matrix <- left_amygdala_10mq_thresh %>%
-#   filter(Group == "SCD") %>%
-#   select(volume, fit_NDI, fit_FWF, fit_ODI) %>%
-#   rename_with( ~ paste0(.x, "_left"))
-# right_vol_noddi_matrix <- right_amygdala_10mq_thresh %>%
-#   filter(Group == "SCD") %>%
-#   select(volume, fit_NDI, fit_FWF, fit_ODI) %>%
-#   rename_with( ~ paste0(.x, "_right"))
-# vol_noddi_matrix <- cbind(left_vol_noddi_matrix, right_vol_noddi_matrix)
-# 
-# corr_matrix_pearson <- psych::corr.test(dti_dki_matrix, vol_noddi_matrix)
-# colnames(corr_matrix_pearson$r) <- c("Left Volume", "Left NDI", "Left FWF", "Left ODI",
-#                                      "Right Volume", "Right NDI", "Right FWF", "Right ODI")
-# 
-# corrplot(corr_matrix_pearson$r, p.mat = corr_matrix_pearson$p, method = 'color',
-#          addCoef.col = "black",
-#          sig.level = c(0.001, 0.01, 0.025), insig = 'label_sig', pch.cex = 0.9)
 
 ### Between Groups Volume and NODDI Differences ###
 left_amygdala %>% 
