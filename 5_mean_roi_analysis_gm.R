@@ -330,7 +330,7 @@ left_corr_matrix_spearman <- psych::corr.test(left_dti_dki_matrix, left_vol_nodd
 
 corrplot(left_corr_matrix_pearson$r, p.mat = left_corr_matrix_pearson$p, method = 'color',
          addCoef.col = "black",
-                   sig.level = c(0.001, 0.01, 0.03), insig = 'label_sig', pch.cex = 0.9)
+         sig.level = c(0.001, 0.01, 0.03), insig = 'label_sig', pch.cex = 0.9)
 
 corrplot(right_corr_matrix_pearson$r, p.mat = right_corr_matrix_pearson$p, method = 'color',
          addCoef.col = "black",

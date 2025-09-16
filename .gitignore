@@ -1,0 +1,16 @@
+.*
+*.Rproj
+*.csv
+*.tsv
+*.nii
+*.nii.gz
+*.txt
+*.docx
+*.pptx
+*/*
+slurm-*
+*.html
+.Rproj.user
+*.jpg
+*.tif
+*.png
