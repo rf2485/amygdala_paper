@@ -219,7 +219,8 @@ right_amygdala <- set_label(right_amygdala,
 left_amygdala %>% 
   select(-participant_id) %>% 
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
+              include = c(volume, dti_fa, dti_md, dki_kfa, dki_mk, 
+                          fit_FWF, fit_NDI, fit_ODI)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
@@ -228,12 +229,13 @@ left_amygdala %>%
                 label ~ "**Imaging Metric**",
                 estimate ~ "**Effect Size**") %>%
   as_gt() %>%
-  gt::gtsave(filename = "left_amygdala_dti_dki_table.docx")
+  gt::gtsave(filename = "left_amygdala_table.docx")
 
 right_amygdala %>% 
   select(-participant_id) %>% 
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})",
-              include = c(dti_fa, dti_md, dki_kfa, dki_mk)
+              include = c(volume, dti_fa, dti_md, dki_kfa, dki_mk, 
+                          fit_FWF, fit_NDI, fit_ODI)
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
@@ -242,7 +244,7 @@ right_amygdala %>%
                 label ~ "**Imaging Metric**",
                 estimate ~ "**Effect Size**") %>%
   as_gt() %>%
-  gt::gtsave(filename = "right_amygdala_dti_dki_table.docx")
+  gt::gtsave(filename = "right_amygdala_table.docx")
 
 #### Within SCD correlations between DTI, DKI, volume, and NODDI ####
 left_dti_dki_matrix <- left_amygdala %>% 
