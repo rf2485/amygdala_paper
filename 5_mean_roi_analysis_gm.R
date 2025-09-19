@@ -9,10 +9,10 @@ library(corrplot)
 
 
 failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
-               'sub-CC510438', #CTL abnormality in left frontal lobe
+               'sub-CC510438', #CTL abnormality in right frontal lobe
                'sub-CC620821', #SCD segmentation errors from large ventricles
                'sub-CC621011', #CTL segmentation errors from large ventricles
-               'sub-CC621080', #SCD segmentation errors
+               'sub-CC621080', #SCD segmentation errors for a mysterious reason
                'sub-CC710551', #CTL motion artifacts in DWI
                'sub-CC711027', #SCD severe motion artifacts in T1
                'sub-CC721434'  #CTL segmentation errors from large ventricles
@@ -36,12 +36,11 @@ scd_status <- dwi_over_55 %>% select(participant_id, SCD, mt_tr, Income, Ethnici
   filter(!participant_id %in% failed_qc) %>%
   rename("Group" = "SCD")
 scd_status$additional_hads_depression[scd_status$additional_hads_depression > 21] <- NA
+#"missing" codes in CamCan include 99, 77, 88, etc. Coding as NA.
 
 #demographics table
 demo_table <- scd_status %>% select(Group, age, age_education_completed, Sex, Income, Ethnicity) %>%
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({min}-{max})") %>%
-  # add_difference(test = list(all_continuous() ~ 'cohens_d')) %>%
-  # modify_column_hide(conf.low) %>%
   add_stat(
     fns = list(all_continuous() ~ my_ES_test,
                all_categorical() ~ my_cramer_v)) %>%  add_p() %>% bold_p() %>%

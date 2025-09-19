@@ -10,20 +10,17 @@ Running this code requires the following dependencies:
   - ggeffects \>= 2.1.0
   - ggtext \>= 0.1.2
   - patchwork \>= 1.3.0
-  - cowplot \>= 1.1.3
-  - rstatix \>= 0.7.2
-  - glue \>= 1.8.0
-  - gt \> 0.11.1
-  - interactions \>= 1.2.0
-  - grid \>= 4.4.3
-- FreeSurfer == 7.4.1
+  - corrplot \>= 0.95
+ - FreeSurfer == 7.4.1
 - Singularity == 3.9.8
 - miniconda3 \>= 4.9.2
 
 Scripts with .sbatch extensions are written for submission to a SLURM
 batch processing system on an HPC. It is highly recommended to conduct
 this analysis on an HPC. Scripts with .sh extensions are written for
-Mate Desktop and can be run with either bash or zsh. QC scripts are not necessary for replicating these results but are highly recommended if you would like to repeat the analysis in another dataset.
+Mate Desktop and can be run with either bash or zsh. QC scripts are 
+not necessary for replicating these results but are highly recommended 
+if you would like to repeat the analysis in another dataset.
 
 Run each numbered script in order. Unnumbered scripts are called by the
 numbered scripts and do not need to be called manually. Wait until the
