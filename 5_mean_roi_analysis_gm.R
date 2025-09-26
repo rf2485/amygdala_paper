@@ -7,7 +7,6 @@ library(ggtext)
 library(patchwork)
 library(corrplot)
 
-
 failed_qc <- c('sub-CC510255', #SCD abnormality in left temporal pole
                'sub-CC510438', #CTL abnormality in right frontal lobe
                'sub-CC620821', #SCD segmentation errors from large ventricles
@@ -52,10 +51,10 @@ demo_table <- scd_status %>% select(Group, age, age_education_completed, Sex, In
                   indicate larger values in SCD.",
                   stat_1 ~ "Mean (Min-Max); n (%); Mean (Standard Deviation)",
                   stat_2 ~ "Mean (Min-Max); n (%); Mean (Standard Deviation)")
-  
+
 #cog and psych table
 cog_psych_table <- scd_status %>% select(Group, homeint_storyrecall_d, 
-                      additional_hads_anxiety, additional_hads_depression) %>%
+                                         additional_hads_anxiety, additional_hads_depression) %>%
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})") %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
@@ -278,12 +277,12 @@ rownames(right_corr_matrix_pearson$r) <- c("FA", "MD", "MK", "KFA")
 
 corrplot(left_corr_matrix_pearson$r, p.mat = left_corr_matrix_pearson$p, method = 'color',
          addCoef.col = "black", tl.col = "black", tl.srt = 0, tl.offset = 1,
-         title = "(a) Left Amygdala", mar = c(0,0,1,0),
+         # title = "(a) Left Amygdala", mar = c(0,0,1,0),
          sig.level = c(0.001, 0.01, 0.03), insig = 'label_sig', pch.cex = 0.9)
 
 corrplot(right_corr_matrix_pearson$r, p.mat = right_corr_matrix_pearson$p, method = 'color',
          addCoef.col = "black", tl.col = "black", tl.srt = 0, tl.offset = 1, 
-         title = "(b) Right Amygdala", mar = c(0,0,1,0),
+         # title = "(b) Right Amygdala", mar = c(0,0,1,0),
          sig.level = c(0.001, 0.01, 0.03), insig = 'label_sig', pch.cex = 0.9)
 
 ##### Linear Models ######
@@ -795,6 +794,11 @@ diffusion_anxiety_plots <- plot_left_amygdala_dti_fa +
   plot_left_amygdala_fit_FWF + 
   plot_left_amygdala_dki_kfa + 
   plot_right_amygdala_dki_kfa +
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(tag_levels = "a")
+
+diffusion_anxiety_plots_sig <- plot_left_amygdala_dti_fa + 
+  plot_left_amygdala_fit_FWF +
   plot_layout(ncol = 2, guides = "collect") +
   plot_annotation(tag_levels = "a")
 
