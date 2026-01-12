@@ -534,25 +534,6 @@ ggsave(filename = "diffusion_age_plots.tif", diffusion_age_plots,
        width = 7.5, height = 7.5, dpi = 600, units = "in", device='tiff')
 
 ###anxiety interaction
-clm_right_amygdala_dki_kfa_depression_int <- ordinal::clm(ordered(additional_hads_depression) ~ dki_kfa * Group, data = right_amygdala)
-summary(clm_right_amygdala_dki_kfa_depression_int)
-across_group_p_value <- summary(clm_right_amygdala_dki_kfa_depression_int)$coefficients["dki_kfa", "Pr(>|z|)"]
-across_group_beta <- summary(clm_right_amygdala_dki_kfa_depression_int)$coefficients["dki_kfa", "Estimate"]
-across_group_odds_ratio <- exp(across_group_beta)
-int_p_value <- summary(clm_right_amygdala_dki_kfa_depression_int)$coefficients["dki_kfa:GroupControl", "Pr(>|z|)"]
-int_beta <- summary(clm_right_amygdala_dki_kfa_depression_int)$coefficients["dki_kfa:GroupControl", "Estimate"]
-int_odds_ratio <- exp(int_beta)
-clm_right_amygdala_dki_kfa_depression_scd <- ordinal::clm(ordered(additional_hads_depression) ~ dki_kfa, data = right_amygdala_scd)
-summary(clm_right_amygdala_dki_kfa_depression_scd)
-scd_p_value <- summary(clm_right_amygdala_dki_kfa_depression_scd)$coefficients["dki_kfa", "Pr(>|z|)"]
-scd_beta <- summary(clm_right_amygdala_dki_kfa_depression_scd)$coefficients["dki_kfa", "Estimate"]
-scd_odds_ratio <- exp(scd_beta)
-clm_right_amygdala_dki_kfa_depression_ctl <- ordinal::clm(ordered(additional_hads_depression) ~ dki_kfa, data = right_amygdala_ctl)
-summary(clm_right_amygdala_dki_kfa_depression_ctl)
-ctl_p_value <- summary(clm_right_amygdala_dki_kfa_depression_ctl)$coefficients["dki_kfa", "Pr(>|z|)"]
-ctl_beta <- summary(clm_right_amygdala_dki_kfa_depression_ctl)$coefficients["dki_kfa", "Estimate"]
-ctl_odds_ratio <- exp(ctl_beta)
-
 glm_left_amygdala_dti_fa_anxiety_int <- lm(dti_fa ~ additional_hads_anxiety * Group, left_amygdala)
 summary(glm_left_amygdala_dti_fa_anxiety_int)
 across_group_p_value <- summary(glm_left_amygdala_dti_fa_anxiety_int)$coefficients[2,4]
@@ -1308,3 +1289,45 @@ diffusion_memory_plots <- plot_left_amygdala_dti_fa +
 
 ggsave(filename = "diffusion_memory_plots.tif", diffusion_memory_plots,
        width = 7.5, height = 7.5, dpi = 600, units = "in", device='tiff')
+
+####response to review: group differences adjusted by anxiety and depression
+left_amygdala %>% 
+  select(-participant_id) %>% 
+  tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})",
+              include = c(volume, dti_fa, dti_md, dki_kfa, dki_mk, 
+                          fit_FWF, fit_NDI, fit_ODI)
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p(adj.vars = c(additional_hads_anxiety, additional_hads_depression)) %>% 
+  bold_p(t=0.025) %>% 
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Imaging Metric**",
+                estimate ~ "**Effect Size**") %>%
+  as_gt() %>%
+  gt::gtsave(filename = "left_amygdala_table_covariates.docx")
+
+right_amygdala %>% 
+  select(-participant_id) %>% 
+  tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})",
+              include = c(volume, dti_fa, dti_md, dki_kfa, dki_mk, 
+                          fit_FWF, fit_NDI, fit_ODI)
+  ) %>%
+  add_difference(test = list(everything() ~ 'cohens_d')) %>%
+  modify_column_hide(conf.low) %>%
+  add_p(adj.vars = c(additional_hads_anxiety, additional_hads_depression)) %>% 
+  bold_p(t=0.025) %>% 
+  modify_header(statistic ~ "**Test Statistic**", 
+                label ~ "**Imaging Metric**",
+                estimate ~ "**Effect Size**") %>%
+  as_gt() %>%
+  gt::gtsave(filename = "right_amygdala_table_covariates.docx")
+
+#response to review: histogram of follow up questions for SCD
+#not sufficient for SCD plus criteria but provides more information about the
+#degree of self-assessed memory issues, higher scores indicate complaints in
+#more domains
+scd_10mq <- dwi_over_55 %>% filter(!participant_id %in% failed_qc) %>%
+  filter(SCD == "SCD") %>% select(homeint_v231:homeint_v240)
+hist(rowSums(scd_10mq))
+
