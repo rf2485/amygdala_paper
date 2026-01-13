@@ -1329,10 +1329,15 @@ right_amygdala %>%
 #more domains
 scd_10mq <- dwi_over_55 %>% filter(!participant_id %in% failed_qc) %>%
   filter(SCD == "SCD") %>% select(homeint_v231:homeint_v240)
+scd_10mq$total_10mq <- rowSums(scd_10mq)
+summary(scd_10mq$total_10mq)
+mean(scd_10mq$total_10mq, na.rm = T)
+sd(scd_10mq$total_10mq, na.rm = T)
+write_tsv(scd_10mq, "10mq.tsv")
 
 tiff("10mq_hist.tif", width = 7.5, height = 7.5, units = "in",
      res = 600)
-hist(rowSums(scd_10mq), include.lowest = T,
+hist(scd_10mq$total_10mq, include.lowest = T,
      main = "Sum of Memory Self Assessment Questionnaire Responses",
      xlab = "Sum of Memory Self Assessment Responses")
 dev.off()
