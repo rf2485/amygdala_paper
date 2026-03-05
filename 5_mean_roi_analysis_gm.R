@@ -42,7 +42,8 @@ demo_table <- scd_status %>% select(Group, age, age_education_completed, Sex, In
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({min}-{max})") %>%
   add_stat(
     fns = list(all_continuous() ~ my_ES_test,
-               all_categorical() ~ my_cramer_v)) %>%  add_p() %>% bold_p() %>%
+               all_categorical() ~ my_cramer_v)) %>%  
+  add_p(pvalue_fun = label_style_pvalue(digits = 2)) %>% bold_p() %>%
   modify_header(statistic ~ "**Test Statistic**",
                 add_stat_1 ~ "**Effect size**",
                 label ~ "") %>%
@@ -58,7 +59,7 @@ cog_psych_table <- scd_status %>% select(Group, homeint_storyrecall_d,
   tbl_summary(by = Group, statistic = all_continuous() ~ "{mean} ({sd})") %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% bold_p() %>%
+  add_p(pvalue_fun = label_style_sigfig(digits = 4)) %>% bold_p() %>%
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "",
                 estimate ~ "**Effect Size**") %>%
@@ -238,7 +239,7 @@ right_amygdala %>%
   ) %>%
   add_difference(test = list(everything() ~ 'cohens_d')) %>%
   modify_column_hide(conf.low) %>%
-  add_p() %>% bold_p(t=0.025) %>% 
+  add_p(pvalue_fun = label_style_pvalue(digits = 2)) %>% bold_p(t=0.025) %>% 
   modify_header(statistic ~ "**Test Statistic**", 
                 label ~ "**Imaging Metric**",
                 estimate ~ "**Effect Size**") %>%
